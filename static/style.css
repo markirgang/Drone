@@ -1,0 +1,881 @@
+:root {
+    --bg-dark: #090d16;
+    --panel-bg: rgba(15, 23, 42, 0.85);
+    --panel-border: rgba(51, 65, 85, 0.6);
+    --accent-cyan: #00f0ff;
+    --accent-blue: #3b82f6;
+    --accent-green: #10b981;
+    --accent-purple: #a855f7;
+    --accent-orange: #f59e0b;
+    --accent-red: #ef4444;
+    --text-light: #f8fafc;
+    --text-muted: #94a3b8;
+    --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: var(--font-family);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.app-header {
+    height: 52px;
+    background: rgba(15, 23, 42, 0.95);
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 10;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #000;
+    font-size: 1.1rem;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.app-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, #fff, var(--accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.top-nav-tabs {
+    display: flex;
+    gap: 6px;
+}
+
+.nav-tab-btn {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--panel-border);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-tab-btn:hover {
+    color: #fff;
+    background: rgba(51, 65, 85, 0.8);
+}
+
+.nav-tab-btn.active {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(59, 130, 246, 0.2));
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.header-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.8);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--panel-border);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 8px var(--accent-green);
+}
+
+.status-dot.disarmed {
+    background: var(--accent-orange);
+    box-shadow: 0 0 8px var(--accent-orange);
+}
+
+.status-dot.sim {
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+/* Views */
+.view-screen {
+    flex: 1;
+    display: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.view-screen.active {
+    display: flex;
+}
+
+#viewAnimation {
+    flex-direction: row;
+}
+
+/* Panels */
+.panel {
+    width: 320px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    border-color: var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    overflow-y: auto;
+    z-index: 5;
+}
+
+.panel.left {
+    border-right: 1px solid var(--panel-border);
+}
+
+.panel.right {
+    border-left: 1px solid var(--panel-border);
+}
+
+.panel-section {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent-cyan);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Viewport 3D */
+.viewport-container {
+    flex: 1;
+    position: relative;
+    background: #04070d;
+}
+
+#viewport3d {
+    width: 100%;
+    height: 100%;
+}
+
+.viewport-toolbar {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+}
+
+.tool-btn {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--panel-border);
+    color: var(--text-light);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+}
+
+.tool-btn:hover {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+/* Flight HUD Overlay */
+.hud-overlay {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(10, 15, 26, 0.75);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 180px;
+    font-size: 0.75rem;
+    font-family: monospace;
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+}
+
+.hud-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hud-val {
+    font-weight: bold;
+    color: var(--accent-cyan);
+}
+
+/* D-Pad Flight Control */
+.dpad-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
+    grid-template-rows: repeat(3, 44px);
+    gap: 4px;
+    z-index: 5;
+    background: rgba(15, 23, 42, 0.85);
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+}
+
+.btn-dpad {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid var(--panel-border);
+    color: #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-dpad:hover {
+    background: var(--accent-blue);
+    border-color: var(--accent-cyan);
+}
+
+.btn-dpad:active {
+    transform: scale(0.92);
+}
+
+.btn-dpad.stop {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+}
+
+/* Sliders & Controls */
+.slider-control {
+    margin-bottom: 8px;
+}
+
+.slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+}
+
+.slider-val {
+    color: var(--accent-cyan);
+    font-weight: bold;
+}
+
+input[type=range] {
+    width: 100%;
+    accent-color: var(--accent-cyan);
+    cursor: pointer;
+}
+
+/* Buttons & Grids */
+.btn-preset {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid var(--panel-border);
+    color: var(--text-light);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-preset:hover {
+    border-color: var(--accent-cyan);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+
+.btn-preset.primary {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(59, 130, 246, 0.25));
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+.btn-preset.danger {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.btn-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+/* Telemetry Grid */
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.telemetry-card {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+
+.telemetry-title {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.telemetry-val {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Settings View */
+#viewSettings, #viewMission {
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+    gap: 16px;
+}
+
+.settings-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 16px;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--panel-border);
+    background: #0f172a;
+    color: #fff;
+    font-size: 0.82rem;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+}
+::-webkit-scrollbar-resize {
+    background: rgba(30, 41, 59, 0.8);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--panel-border);
+    border-radius: 3px;
+}
+
+/* WIRING DIAGRAM & SCHEMATIC VIEW STYLES */
+#viewWiring {
+    display: none;
+    width: 100%;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    background: #090d16;
+    color: #f8fafc;
+    box-sizing: border-box;
+}
+
+#viewWiring.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 1;
+}
+
+.wiring-container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.print-doc-header,
+.print-doc-footer {
+    display: none;
+}
+
+.wiring-header-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: var(--radius, 10px);
+    padding: 22px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.wiring-header-title-box {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.wiring-header-icon {
+    font-size: 2.2rem;
+    padding: 12px 16px;
+    background: rgba(0, 240, 255, 0.12);
+    border: 1px solid var(--accent-cyan);
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.wiring-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--accent-cyan);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.wiring-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.wiring-meta-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.meta-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+}
+
+.meta-badge.i2c { background: rgba(0, 240, 255, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.meta-badge.pwr { background: rgba(245, 158, 11, 0.15); border-color: var(--accent-orange); color: var(--accent-orange); }
+.meta-badge.gpio { background: rgba(16, 185, 129, 0.15); border-color: var(--accent-green); color: var(--accent-green); }
+
+.visual-schematic-card {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.schematic-svg-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.schematic-svg-wrapper svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.wiring-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 20px;
+}
+
+.wiring-card {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.wiring-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+}
+
+.wiring-card-header h3 {
+    font-size: 0.95rem;
+    color: #fff;
+    margin: 0;
+}
+
+.card-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.card-tag.pi { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+.card-tag.pwr { background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid #f97316; }
+
+.wiring-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.wiring-table th, .wiring-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wiring-table th {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
+.pin-no { background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+.sig-tx { color: var(--accent-cyan); font-weight: bold; }
+.sig-rx { color: var(--accent-green); font-weight: bold; }
+.sig-gnd { color: #94a3b8; font-weight: bold; }
+
+/* GUIDES AND INSTRUCTIONS VIEW STYLES */
+#viewInstructions {
+    display: none;
+    width: 100%;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    background: #090d16;
+    color: #f8fafc;
+    box-sizing: border-box;
+}
+
+#viewInstructions.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.guide-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.guide-header {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.guide-title-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.guide-icon {
+    font-size: 2rem;
+    padding: 10px 14px;
+    background: rgba(0, 240, 255, 0.15);
+    border: 1px solid var(--accent-cyan);
+    border-radius: 12px;
+}
+
+.guide-title-box h2 {
+    font-size: 1.25rem;
+    color: var(--accent-cyan);
+    margin-bottom: 4px;
+}
+
+.guide-title-box p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.guide-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.guide-card {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.guide-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.guide-step {
+    background: rgba(0, 240, 255, 0.2);
+    color: var(--accent-cyan);
+    border: 1px solid var(--accent-cyan);
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.guide-card-header h3 {
+    font-size: 1rem;
+    color: #fff;
+    margin: 0;
+}
+
+.guide-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+}
+
+.guide-list code {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--accent-cyan);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* @MEDIA PRINT FOR HIGH QUALITY PDF EXPORT */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm 10mm 12mm 10mm;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #0b0e14 !important;
+        overflow: visible !important;
+        height: auto !important;
+        width: auto !important;
+    }
+
+    .app-header,
+    .panel,
+    .viewport-container,
+    .dpad-overlay,
+    .print-btn,
+    .nav-tab-btn,
+    .header-status,
+    .top-nav-tabs {
+        display: none !important;
+    }
+
+    .view-screen {
+        display: none !important;
+    }
+
+    #viewWiring,
+    #viewInstructions {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+
+    .wiring-container,
+    .guide-wrapper {
+        max-width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        gap: 16px !important;
+    }
+
+    .print-doc-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 16px !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 16px !important;
+        border-bottom: 3px solid #0f172a !important;
+    }
+
+    .print-doc-logo {
+        width: 48px;
+        height: 48px;
+        background: #0f172a;
+        color: #00f0ff;
+        font-size: 24px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .print-doc-title {
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+    }
+
+    .print-doc-sub {
+        font-size: 10px !important;
+        color: #475569 !important;
+        margin: 2px 0 !important;
+    }
+
+    .print-doc-meta {
+        font-size: 9px !important;
+        color: #64748b !important;
+        font-family: monospace !important;
+    }
+
+    .print-doc-footer {
+        display: block !important;
+        text-align: center !important;
+        margin-top: 16px !important;
+        border-top: 1px solid #cbd5e1 !important;
+        font-size: 0.68rem !important;
+        color: #64748b !important;
+        font-family: monospace !important;
+    }
+}
+
+/* PDF Export Optimization Styles */
+body.exporting-pdf .app-header,
+body.exporting-pdf .wiring-actions,
+body.exporting-pdf .guide-actions {
+    display: none !important;
+}
+
+body.exporting-pdf #viewWiring,
+body.exporting-pdf #viewInstructions {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+body.exporting-pdf .wiring-container,
+body.exporting-pdf .guide-wrapper {
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 10px !important;
+    overflow: visible !important;
+}
+
+body.exporting-pdf .print-doc-header {
+    display: flex !important;
+}
+
+body.exporting-pdf .print-doc-footer {
+    display: block !important;
+}

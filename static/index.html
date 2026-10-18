@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixhawk 4 Drone Command Center & Multimodal AI Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="lib/three.min.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+</head>
+<body>
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="logo-container">
+            <div class="logo-icon">🚁</div>
+            <div class="app-title">PIXHAWK 4 DRONE COMMAND CENTER</div>
+        </div>
+
+        <nav class="top-nav-tabs">
+            <button class="nav-tab-btn active" data-view="viewAnimation">🎮 3D Flight View & HUD</button>
+            <button class="nav-tab-btn" data-view="viewSettings">⚙️ Hardware & Serial</button>
+            <button class="nav-tab-btn" data-view="viewMission">📍 Mission Planner</button>
+            <button class="nav-tab-btn" data-view="viewWiring">🔌 Wiring Schematic</button>
+            <button class="nav-tab-btn" data-view="viewInstructions">📖 Guide & Instructions</button>
+        </nav>
+
+        <div class="header-status">
+            <div class="status-badge" id="badgeMavlink">
+                <span class="status-dot" id="dotMavlink"></span>
+                <span id="textMavlink">MAVLINK CONNECTED</span>
+            </div>
+            <div class="status-badge" id="badgeArmState">
+                <span class="status-dot disarmed" id="dotArmState"></span>
+                <span id="textArmState">DISARMED</span>
+            </div>
+            <button class="btn-preset primary" id="btnExportScript">Export Python Code</button>
+        </div>
+    </header>
+
+    <!-- VIEW 1: 3D FLIGHT VIEW & TELEMETRY -->
+    <div class="view-screen active" id="viewAnimation">
+        <!-- Left Panel: Controls & Flight Commands -->
+        <aside class="panel left">
+            <div class="panel-section">
+                <div class="section-title">Safety & Arming</div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-preset primary" id="btnArm" style="flex:1; background:linear-gradient(135deg, rgba(16,185,129,0.3), rgba(0,240,255,0.3)); font-weight:bold;">⚡ ARM MOTORS</button>
+                    <button class="btn-preset danger" id="btnDisarm" style="flex:1; font-weight:bold;">⛔ DISARM</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="section-title">Autonomous Flight Commands</div>
+                <div class="btn-group">
+                    <button class="btn-preset primary" id="btnTakeoff" style="grid-column: 1 / -1; font-size:0.85rem; padding:10px; font-weight:bold;">🛫 AUTONOMOUS TAKEOFF</button>
+                    <button class="btn-preset" id="btnLand" style="background:rgba(245,158,11,0.25); border-color:var(--accent-orange); font-weight:bold;">🛬 LAND</button>
+                    <button class="btn-preset" id="btnRTL" style="background:rgba(168,85,247,0.25); border-color:var(--accent-purple); font-weight:bold;">🏠 RETURN HOME (RTL)</button>
+                    <button class="btn-preset" id="btnHold">⏸️ HOVER / HOLD</button>
+                    <button class="btn-preset" id="btnOffboard">🛰️ OFFBOARD MODE</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="section-title">Flight Mode Selector</div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <select id="selectFlightMode" class="form-select">
+                        <option value="POSCTL" selected>POSCTL - Position Hold</option>
+                        <option value="OFFBOARD">OFFBOARD - Companion Computer Control</option>
+                        <option value="ALTCTL">ALTCTL - Altitude Control</option>
+                        <option value="AUTO.TAKEOFF">AUTO.TAKEOFF - Auto Takeoff</option>
+                        <option value="AUTO.LAND">AUTO.LAND - Auto Landing</option>
+                        <option value="AUTO.RTL">AUTO.RTL - Return to Launch</option>
+                        <option value="STABILIZED">STABILIZED - Manual Stabilized</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="section-title">Target Altitude</div>
+                <div class="slider-control">
+                    <div class="slider-label"><span>Takeoff Altitude</span><span class="slider-val" id="valTargetAlt">2.5 m</span></div>
+                    <input type="range" id="slideTargetAlt" min="1.0" max="20.0" step="0.5" value="2.5">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="section-title">Keyboard Nudge Controls</div>
+                <div style="font-size:0.7rem; color:var(--text-muted); line-height:1.4;">
+                    • <strong>W / S:</strong> Pitch Forward / Backward<br>
+                    • <strong>A / D:</strong> Roll Strafe Left / Right<br>
+                    • <strong>Q / E:</strong> Yaw Turn Left / Right<br>
+                    • <strong>Up / Down:</strong> Climb / Descend Altitude
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Viewport -->
+        <main class="viewport-container">
+            <div id="viewport3d"></div>
+
+            <div class="viewport-toolbar">
+                <button class="tool-btn" id="btnResetCam">📷 Reset Camera</button>
+                <button class="tool-btn" id="btnTopCam">⬇️ Top View</button>
+                <button class="tool-btn" id="btnChaserCam">🚁 Chaser View</button>
+            </div>
+
+            <!-- HUD Overlay -->
+            <div class="hud-overlay">
+                <div class="hud-row"><span>ALTITUDE:</span><span class="hud-val" id="hudAlt">0.0 m</span></div>
+                <div class="hud-row"><span>CLIMB RATE:</span><span class="hud-val" id="hudClimb">0.0 m/s</span></div>
+                <div class="hud-row"><span>GROUNDSPEED:</span><span class="hud-val" id="hudSpeed">0.0 m/s</span></div>
+                <div class="hud-row"><span>AIRSPEED:</span><span class="hud-val" id="hudAirspeed">0.0 m/s</span></div>
+                <div class="hud-row"><span>HEADING:</span><span class="hud-val" id="hudHeading">0.0°</span></div>
+                <div class="hud-row"><span>BATTERY:</span><span class="hud-val" id="hudBattery">16.8V (98%)</span></div>
+            </div>
+
+            <!-- D-Pad Overlay -->
+            <div class="dpad-overlay">
+                <div></div>
+                <button class="btn-dpad" id="btnFwd" title="Pitch Forward (W)">▲</button>
+                <div></div>
+                <button class="btn-dpad" id="btnLeft" title="Roll Left (A)">◄</button>
+                <button class="btn-dpad stop" id="btnStop" title="Hover / Stop">■</button>
+                <button class="btn-dpad" id="btnRight" title="Roll Right (D)">►</button>
+                <button class="btn-dpad" id="btnTurnL" title="Yaw Left (Q)">↺</button>
+                <button class="btn-dpad" id="btnBwd" title="Pitch Backward (S)">▼</button>
+                <button class="btn-dpad" id="btnTurnR" title="Yaw Right (E)">↻</button>
+            </div>
+        </main>
+
+        <!-- Right Panel: Gemini AI & Telemetry -->
+        <aside class="panel right">
+            <!-- Gemini Multimodal AI Panel -->
+            <div class="panel-section" id="geminiAiPanel">
+                <div class="section-title">
+                    <span>🤖 Gemini AI Multimodal Agent</span>
+                    <button class="tool-btn" id="btnApiKeySettings" style="padding:2px 6px;">🔑 Key</button>
+                </div>
+
+                <!-- API Key Box -->
+                <div id="apiKeyBox" style="display: none; margin-bottom: 10px;">
+                    <input type="password" id="inputApiKey" placeholder="Enter Gemini API Key..." value="" 
+                           style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--panel-border); background:#0f172a; color:#fff; font-size:0.8rem;">
+                    <button class="btn-preset primary" id="btnSaveApiKey" style="width:100%; margin-top:6px;">Save Key</button>
+                </div>
+
+                <!-- eMeet Pixy Camera Preview -->
+                <div style="position:relative; width:100%; height:120px; background:#000; border-radius:8px; overflow:hidden; margin-bottom:8px; border:1px solid var(--panel-border);">
+                    <img id="camFeed" src="/api/camera/frame" alt="eMeet Pixy Drone Camera Feed" style="width:100%; height:100%; object-fit:cover;">
+                    <div id="gestureBadge" style="position:absolute; bottom:6px; left:6px; background:rgba(0,0,0,0.7); color:var(--accent-cyan); font-size:0.7rem; padding:3px 8px; border-radius:4px; border:1px solid var(--accent-cyan);">
+                        Gesture: Idle
+                    </div>
+                </div>
+
+                <!-- Chat History Box -->
+                <div id="chatHistory" style="height:120px; overflow-y:auto; background:rgba(15,23,42,0.8); border-radius:8px; padding:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:8px; font-size:0.78rem; display:flex; flex-direction:column; gap:6px;">
+                    <div class="msg ai"><strong>Gemini AI:</strong> Pixhawk 4 AI pilot online. Speak via microphone or show 5 fingers to takeoff!</div>
+                </div>
+
+                <!-- Mic Volume VU Meter -->
+                <div style="background:rgba(15,23,42,0.9); padding:8px; border-radius:8px; border:1px solid var(--panel-border); margin-bottom:8px;">
+                    <div style="font-size:0.72rem; color:var(--accent-cyan); font-weight:bold; margin-bottom:4px; display:flex; justify-content:space-between; align-align:center;">
+                        <span>🎙️ LIVE MIC SOUND INDICATOR</span>
+                        <span id="vuVal" style="color:var(--accent-green); font-family:monospace; font-size:0.8rem;">0%</span>
+                    </div>
+                    <div style="background:#0f172a; height:12px; border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); position:relative; margin-bottom:6px;">
+                        <div id="micVuBar" style="width:0%; height:100%; background:linear-gradient(90deg, var(--accent-cyan), var(--accent-green), var(--accent-orange), var(--accent-red)); transition:width 0.04s linear; box-shadow: 0 0 10px var(--accent-green);"></div>
+                    </div>
+
+                    <div class="slider-control" style="margin-bottom:4px;">
+                        <div class="slider-label" style="font-size:0.68rem; margin-bottom:2px;">
+                            <span>🎚️ Microphone Gain / Sensitivity</span>
+                            <span class="slider-val" id="valMicSensitivity" style="color:var(--accent-cyan); font-size:0.75rem;">100%</span>
+                        </div>
+                        <input type="range" id="slideMicSensitivity" min="10" max="300" value="100" style="width:100%;">
+                    </div>
+
+                    <div id="micStatusText" style="font-size:0.68rem; color:var(--text-muted); margin-top:2px;">
+                        Status: Click "Activate Hands-Free Voice" to speak.
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <input type="text" id="chatInput" placeholder="Command drone (e.g., 'Take off to 3m')..." 
+                           style="flex:1; padding:8px; border-radius:6px; border:1px solid var(--panel-border); background:#0f172a; color:#fff; font-size:0.8rem;">
+                    <button class="btn-preset primary" id="btnSendChat">Send</button>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                    <button class="btn-preset" id="btnMic" style="background:linear-gradient(135deg, rgba(16,185,129,0.25), rgba(0,240,255,0.25)); border-color:var(--accent-green); font-weight:bold;">🎙️ Hands-Free Voice</button>
+                    <button class="btn-preset" id="btnAskVision">👁️ Describe Sight</button>
+                </div>
+            </div>
+
+            <!-- Detailed Telemetry -->
+            <div class="panel-section">
+                <div class="section-title">MAVLink Telemetry Sensors</div>
+                <div class="telemetry-grid">
+                    <div class="telemetry-card">
+                        <div class="telemetry-title">PITCH / ROLL</div>
+                        <div class="telemetry-val" id="telemAttitude">0.0° / 0.0°</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <div class="telemetry-title">YAW / HEADING</div>
+                        <div class="telemetry-val" id="telemHeading">0.0°</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <div class="telemetry-title">ALTITUDE / CLIMB</div>
+                        <div class="telemetry-val" id="telemAlt">0.0m (0.0m/s)</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <div class="telemetry-title">BATTERY VOLTAGE</div>
+                        <div class="telemetry-val" id="telemBattery">16.8V (98%)</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <div class="telemetry-title">GPS FIX / SATS</div>
+                        <div class="telemetry-val" id="telemGps">3D Fix (14 Sats)</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <div class="telemetry-title">LAT / LON</div>
+                        <div class="telemetry-val" id="telemCoords" style="font-size:0.75rem;">37.7749, -122.4194</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- VIEW 2: SETTINGS & HARDWARE CONFIG -->
+    <div class="view-screen" id="viewSettings">
+        <div class="settings-card">
+            <div class="section-title">📡 Pixhawk 4 Serial MAVLink Configuration</div>
+            <div class="form-group">
+                <label class="form-label">Serial Port Path</label>
+                <select id="selectSerialPort" class="form-select">
+                    <option value="/dev/ttyAMA0" selected>Raspberry Pi GPIO UART (/dev/ttyAMA0) [Default TELEM1]</option>
+                    <option value="/dev/serial0">Primary Serial Alias (/dev/serial0)</option>
+                    <option value="/dev/ttyS0">Secondary Mini UART (/dev/ttyS0)</option>
+                    <option value="/dev/ttyACM0">USB Micro-USB Direct (/dev/ttyACM0)</option>
+                    <option value="/dev/ttyUSB0">USB-to-FTDI Telemetry Radio (/dev/ttyUSB0)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Serial Baud Rate</label>
+                <select id="selectBaudRate" class="form-select">
+                    <option value="921600" selected>921600 Baud (PX4 High-Speed TELEM1)</option>
+                    <option value="57600">57600 Baud (Standard Telemetry Radio / TELEM2)</option>
+                    <option value="115200">115200 Baud</option>
+                </select>
+            </div>
+            <button class="btn-preset primary" id="btnConnectMavlink">Connect MAVLink Serial</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="section-title">📷 Audio & Video Hardware Peripherals</div>
+            <div class="form-group">
+                <label class="form-label">Camera Source</label>
+                <select id="selectCamera" class="form-select">
+                    <option value="usb" selected>eMeet Pixy USB Webcam (/dev/video0) [Default]</option>
+                    <option value="1">Secondary USB Camera (/dev/video1)</option>
+                    <option value="csi">Raspberry Pi CSI Camera (Picamera2 / OV5647)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Microphone Input</label>
+                <select id="selectMic" class="form-select">
+                    <option value="emeet_pixy" selected>eMeet Pixy USB Microphone</option>
+                    <option value="default">System Default Microphone</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">AI Speech Synthesis Voice</label>
+                <select id="selectVoice" class="form-select">
+                    <option value="ai_female_us" selected>♀️ AI Voice - Female (US Accent)</option>
+                    <option value="ai_male_us">♂️ AI Voice - Male (US Accent)</option>
+                    <option value="ai_male_uk">♂️ AI Voice - Male (British Accent)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="section-title">🔑 Gemini AI API Configuration</div>
+            <div class="form-group">
+                <label class="form-label">Gemini API Key</label>
+                <input type="password" id="settingsApiKey" class="form-input" value="">
+            </div>
+            <button class="btn-preset primary" id="btnSaveSettings">Save Configuration</button>
+        </div>
+    </div>
+
+    <!-- VIEW 3: MISSION PLANNER -->
+    <div class="view-screen" id="viewMission">
+        <div class="settings-card">
+            <div class="section-title">📍 Autonomous Waypoint Mission Planner</div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">
+                Plan waypoint navigation targets for Pixhawk 4 autonomous offboard execution.
+            </p>
+            <div class="btn-group" style="margin-bottom:12px;">
+                <button class="btn-preset primary" id="btnAddWaypoint">➕ Add Waypoint Target</button>
+                <button class="btn-preset danger" id="btnClearWaypoints">🗑️ Clear Waypoints</button>
+            </div>
+            <div id="waypointList" style="display:flex; flex-direction:column; gap:8px;">
+                <div class="telemetry-card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><strong>WP 1 (Home Base):</strong> 37.774929, -122.419416 (Alt: 2.5m)</div>
+                    <span style="color:var(--accent-green); font-size:0.75rem;">TAKEOFF POINT</span>
+                </div>
+            </div>
+            <button class="btn-preset primary" id="btnExecuteMission" style="width:100%; margin-top:12px; font-weight:bold; padding:10px;">🚀 UPLOAD & EXECUTE MISSION</button>
+        </div>
+    </div>
+
+    <!-- VIEW 4: WIRING DIAGRAM & HARDWARE SCHEMATIC -->
+    <div class="view-screen" id="viewWiring">
+        <div class="wiring-container">
+            <!-- Printable PDF Header -->
+            <div class="print-doc-header">
+                <div class="print-doc-logo">🔌</div>
+                <div>
+                    <h1 class="print-doc-title">PIXHAWK 4 DRONE HARDWARE ELECTRICAL WIRING SCHEMATIC</h1>
+                    <p class="print-doc-sub">Raspberry Pi 4/5 Companion Computer • Pixhawk 4 Autopilot • 4x 30A ESCs • eMeet Pixy USB Cam & Mic</p>
+                    <p class="print-doc-meta">Document Rev: 2.5 • Platform: PX4 Quadrotor X • Generated: Pixhawk 4 Drone Command Center</p>
+                </div>
+            </div>
+
+            <!-- Top Action Header -->
+            <div class="wiring-header-card">
+                <div class="wiring-header-title-box">
+                    <div class="wiring-header-icon">🔌</div>
+                    <div>
+                        <h2 class="wiring-title">Pixhawk 4 Quadrotor Electrical Wiring Schematic & Pinout Guide</h2>
+                        <p class="wiring-subtitle">
+                            Master Wiring Architecture for Companion Pi 4/5, TELEM1 Serial UART, 4S LiPo Power Module, 4x ESCs, GPS/Compass, and eMeet Pixy Vision
+                        </p>
+                        <div class="wiring-meta-badges">
+                            <span class="meta-badge">📋 Rev 2.5</span>
+                            <span class="meta-badge i2c">⚡ MAVLink v2 (921600 Baud)</span>
+                            <span class="meta-badge pwr">🔋 4S LiPo (14.8V) / 5.2V Power Module</span>
+                            <span class="meta-badge gpio">📡 GPIO TELEM1 UART (/dev/ttyAMA0)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wiring-actions" style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn-preset primary print-btn" id="btnExportWiringPDF">
+                        📄 Export Schematic to PDF
+                    </button>
+                    <button class="btn-preset print-btn" id="btnPrintWiringPDF" style="background: rgba(255,255,255,0.08); border: 1px solid var(--panel-border); color: #fff;">
+                        🖨️ Quick Print
+                    </button>
+                    <button class="btn-preset primary" id="btnExportWiringScript">
+                        🐍 Download MAVLink Python Script
+                    </button>
+                </div>
+            </div>
+
+            <!-- Vector Schematic Diagram Card -->
+            <div class="visual-schematic-card">
+                <div class="section-title" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🎨 Interactive Visual Circuit Schematic Diagram</span>
+                    <span style="font-size:0.75rem; color:var(--accent-cyan);">HIGH RESOLUTION VECTOR DIAGRAM</span>
+                </div>
+                <div class="schematic-svg-wrapper">
+                    <svg viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="gradPi" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#1e293b"/>
+                                <stop offset="100%" stop-color="#0f172a"/>
+                            </linearGradient>
+                            <linearGradient id="gradPixhawk" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#1e3a8a"/>
+                                <stop offset="100%" stop-color="#0f172a"/>
+                            </linearGradient>
+                            <linearGradient id="gradPdb" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#7c2d12"/>
+                                <stop offset="100%" stop-color="#0f172a"/>
+                            </linearGradient>
+                            <linearGradient id="gradEsc" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#3b0764"/>
+                                <stop offset="100%" stop-color="#0f172a"/>
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Background -->
+                        <rect width="1000" height="540" rx="12" fill="#0b1120" stroke="rgba(0, 240, 255, 0.2)" stroke-width="2"/>
+
+                        <!-- Title Text -->
+                        <text x="500" y="30" text-anchor="middle" fill="#00f0ff" font-weight="bold" font-size="16" letter-spacing="1">PIXHAWK 4 DRONE MASTER SYSTEM HARDWARE WIRING DIAGRAM</text>
+
+                        <!-- 1. Raspberry Pi Companion Computer Box -->
+                        <rect x="40" y="60" width="240" height="250" rx="10" fill="url(#gradPi)" stroke="#38bdf8" stroke-width="2"/>
+                        <rect x="50" y="70" width="220" height="30" rx="6" fill="rgba(56, 189, 248, 0.15)"/>
+                        <text x="160" y="90" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="13">Raspberry Pi 4 / 5</text>
+
+                        <text x="60" y="125" fill="#f8fafc" font-size="11" font-weight="bold">• Pin 8 (TXD / GPIO 14) → Pixhawk RX</text>
+                        <text x="60" y="145" fill="#f8fafc" font-size="11" font-weight="bold">• Pin 10 (RXD / GPIO 15) ← Pixhawk TX</text>
+                        <text x="60" y="165" fill="#94a3b8" font-size="11" font-weight="bold">• Pin 6 (GND) Common Ground</text>
+                        <text x="60" y="185" fill="#ef4444" font-size="11" font-weight="bold">• Pin 2/4 (5V Power In from UBEC)</text>
+                        <text x="60" y="210" fill="#10b981" font-size="11" font-weight="bold">• USB 3.0: eMeet Pixy HD Cam/Mic</text>
+                        <text x="60" y="230" fill="#a855f7" font-size="11" font-weight="bold">• USB 2.0: Telemetry Radio (915MHz)</text>
+                        <text x="60" y="260" fill="#38bdf8" font-size="10.5" font-weight="bold">MAVLink Companion Host / Gemini AI</text>
+
+                        <!-- 2. Pixhawk 4 Autopilot Controller Box -->
+                        <rect x="380" y="60" width="250" height="250" rx="10" fill="url(#gradPixhawk)" stroke="#00f0ff" stroke-width="2"/>
+                        <rect x="390" y="70" width="230" height="30" rx="6" fill="rgba(0, 240, 255, 0.2)"/>
+                        <text x="505" y="90" text-anchor="middle" fill="#00f0ff" font-weight="bold" font-size="13">Pixhawk 4 Flight Controller</text>
+
+                        <text x="395" y="120" fill="#00f0ff" font-size="11" font-weight="bold">• TELEM1: UART Port (921600 Baud)</text>
+                        <text x="395" y="140" fill="#f59e0b" font-size="11" font-weight="bold">• POWER1: 5.2V Sense from Power Module</text>
+                        <text x="395" y="160" fill="#10b981" font-size="11" font-weight="bold">• GPS & MAP: Neo-M8N GPS + Compass</text>
+                        <text x="395" y="180" fill="#ec4899" font-size="11" font-weight="bold">• MAIN OUT: PWM Servo Signal Pins 1-4</text>
+                        <text x="395" y="200" fill="#38bdf8" font-size="11" font-weight="bold">• DSM/SBUS: RC Radio Receiver Input</text>
+                        <text x="395" y="220" fill="#94a3b8" font-size="11" font-weight="bold">• SAFETY: Arming Switch + Status LED</text>
+                        <text x="395" y="250" fill="#00f0ff" font-size="10.5" font-weight="bold">PX4 Autopilot Firmware Engine</text>
+
+                        <!-- 3. Power Distribution & LiPo Battery Box -->
+                        <rect x="710" y="60" width="250" height="180" rx="10" fill="url(#gradPdb)" stroke="#f97316" stroke-width="2"/>
+                        <rect x="720" y="70" width="230" height="30" rx="6" fill="rgba(249, 115, 22, 0.2)"/>
+                        <text x="835" y="90" text-anchor="middle" fill="#f97316" font-weight="bold" font-size="13">Power PM07 & 4S LiPo</text>
+
+                        <text x="725" y="120" fill="#ef4444" font-size="11" font-weight="bold">• Main Power: 4S 14.8V (XT60 Connector)</text>
+                        <text x="725" y="140" fill="#f59e0b" font-size="11" font-weight="bold">• Regulated Output: 5.2V @ 3A for Pi/Pixhawk</text>
+                        <text x="725" y="160" fill="#f8fafc" font-size="11">• Voltage / Current Telemetry Sensor</text>
+                        <text x="725" y="180" fill="#94a3b8" font-size="11">• ESC Power Rails (14.8V High-Current)</text>
+
+                        <!-- 4. 4x ESC & Motors Box -->
+                        <rect x="380" y="340" width="580" height="170" rx="10" fill="url(#gradEsc)" stroke="#a855f7" stroke-width="2"/>
+                        <rect x="390" y="350" width="560" height="30" rx="6" fill="rgba(168, 85, 247, 0.2)"/>
+                        <text x="670" y="370" text-anchor="middle" fill="#a855f7" font-weight="bold" font-size="13">Quadrotor X Motor Assignments (4x 30A ESCs + Brushless Motors)</text>
+
+                        <rect x="400" y="390" width="125" height="105" rx="6" fill="rgba(15, 23, 42, 0.8)" stroke="#a855f7"/>
+                        <text x="462" y="410" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">M1: Front Right</text>
+                        <text x="462" y="430" text-anchor="middle" fill="#f8fafc" font-size="10">Counter-CW (CCW)</text>
+                        <text x="462" y="450" text-anchor="middle" fill="#94a3b8" font-size="9.5">Pixhawk MAIN 1</text>
+
+                        <rect x="540" y="390" width="125" height="105" rx="6" fill="rgba(15, 23, 42, 0.8)" stroke="#a855f7"/>
+                        <text x="602" y="410" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">M2: Rear Left</text>
+                        <text x="602" y="430" text-anchor="middle" fill="#f8fafc" font-size="10">Counter-CW (CCW)</text>
+                        <text x="602" y="450" text-anchor="middle" fill="#94a3b8" font-size="9.5">Pixhawk MAIN 2</text>
+
+                        <rect x="680" y="390" width="125" height="105" rx="6" fill="rgba(15, 23, 42, 0.8)" stroke="#a855f7"/>
+                        <text x="742" y="410" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold">M3: Front Left</text>
+                        <text x="742" y="430" text-anchor="middle" fill="#f8fafc" font-size="10">Clockwise (CW)</text>
+                        <text x="742" y="450" text-anchor="middle" fill="#94a3b8" font-size="9.5">Pixhawk MAIN 3</text>
+
+                        <rect x="820" y="390" width="125" height="105" rx="6" fill="rgba(15, 23, 42, 0.8)" stroke="#a855f7"/>
+                        <text x="882" y="410" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold">M4: Rear Right</text>
+                        <text x="882" y="430" text-anchor="middle" fill="#f8fafc" font-size="10">Clockwise (CW)</text>
+                        <text x="882" y="450" text-anchor="middle" fill="#94a3b8" font-size="9.5">Pixhawk MAIN 4</text>
+
+                        <!-- Connecting Wiring Wires -->
+                        <path d="M 280 130 L 380 130" stroke="#00f0ff" stroke-width="3" stroke-dasharray="6 3"/>
+                        <text x="330" y="122" text-anchor="middle" fill="#00f0ff" font-size="10" font-weight="bold">MAVLink UART</text>
+
+                        <path d="M 710 140 L 630 140" stroke="#f59e0b" stroke-width="3"/>
+                        <text x="670" y="132" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold">5.2V VCC</text>
+
+                        <path d="M 835 60 L 835 40 L 160 40 L 160 60" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+                        <text x="500" y="36" text-anchor="middle" fill="#ef4444" font-size="9.5" font-weight="bold">Regulated 5.2V Power for Pi</text>
+
+                        <path d="M 505 310 L 505 340" stroke="#a855f7" stroke-width="3"/>
+                        <text x="505" y="330" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="bold">PWM Signals 1-4</text>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Pinout Specifications Cards -->
+            <div class="wiring-grid">
+                <div class="wiring-card">
+                    <div class="wiring-card-header">
+                        <span class="card-tag pi">Raspberry Pi</span>
+                        <h3>📡 TELEM1 Serial UART Connection</h3>
+                    </div>
+                    <table class="wiring-table">
+                        <thead>
+                            <tr>
+                                <th>Pi 4/5 Pin</th>
+                                <th>Signal</th>
+                                <th>Pixhawk 4 TELEM1</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="pin-no">Pin 8</span></td>
+                                <td><span class="sig-tx">TXD (GPIO 14)</span></td>
+                                <td>RX Pin (Pin 3)</td>
+                                <td>MAVLink Serial Transmit</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pin-no">Pin 10</span></td>
+                                <td><span class="sig-rx">RXD (GPIO 15)</span></td>
+                                <td>TX Pin (Pin 2)</td>
+                                <td>MAVLink Serial Receive</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pin-no">Pin 6</span></td>
+                                <td><span class="sig-gnd">GND</span></td>
+                                <td>GND Pin (Pin 6)</td>
+                                <td>Common Ground Reference</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="wiring-card">
+                    <div class="wiring-card-header">
+                        <span class="card-tag pwr">Power & Motors</span>
+                        <h3>⚡ Quadrotor X Motor & ESC Assignments</h3>
+                    </div>
+                    <table class="wiring-table">
+                        <thead>
+                            <tr>
+                                <th>Motor #</th>
+                                <th>PX4 Signal</th>
+                                <th>Rotation</th>
+                                <th>Position</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>M1</strong></td>
+                                <td>MAIN 1</td>
+                                <td><span style="color:var(--accent-green);">Counter-Clockwise (CCW)</span></td>
+                                <td>Front Right</td>
+                            </tr>
+                            <tr>
+                                <td><strong>M2</strong></td>
+                                <td>MAIN 2</td>
+                                <td><span style="color:var(--accent-green);">Counter-Clockwise (CCW)</span></td>
+                                <td>Rear Left</td>
+                            </tr>
+                            <tr>
+                                <td><strong>M3</strong></td>
+                                <td>MAIN 3</td>
+                                <td><span style="color:var(--accent-cyan);">Clockwise (CW)</span></td>
+                                <td>Front Left</td>
+                            </tr>
+                            <tr>
+                                <td><strong>M4</strong></td>
+                                <td>MAIN 4</td>
+                                <td><span style="color:var(--accent-cyan);">Clockwise (CW)</span></td>
+                                <td>Rear Right</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Printable PDF Footer -->
+            <div class="print-doc-footer">
+                Pixhawk 4 Drone Command Center • Document Generated Automatically • Confidential Hardware Design File
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 5: OPERATING MANUAL & INSTRUCTIONS -->
+    <div class="view-screen" id="viewInstructions">
+        <div class="guide-wrapper">
+            <!-- Printable Header -->
+            <div class="print-doc-header">
+                <div class="print-doc-logo">📖</div>
+                <div>
+                    <h1 class="print-doc-title">PIXHAWK 4 DRONE COMMAND CENTER OPERATING MANUAL</h1>
+                    <p class="print-doc-sub">Complete Operational Procedures, Gemini AI Setup, Flight Controls & Failsafe Management</p>
+                    <p class="print-doc-meta">Document Rev: 2.5 • Official Operator Guide • Pixhawk 4 / Raspberry Pi Companion</p>
+                </div>
+            </div>
+
+            <div class="guide-header">
+                <div class="guide-title-box">
+                    <span class="guide-icon">📖</span>
+                    <div>
+                        <h2>Pixhawk 4 Drone Command Center Operating Manual & Flight Guide</h2>
+                        <p>Complete Operational Instructions for Flight Controls, MAVLink Telemetry, Gemini AI Multimodal Voice Commands, and Autonomous Waypoints</p>
+                    </div>
+                </div>
+                <div class="guide-actions">
+                    <button class="btn-preset primary print-btn" id="btnExportInstructionsPDF">📄 Export PDF</button>
+                    <button class="btn-preset print-btn" id="btnPrintInstructionsPDF" style="background: rgba(255,255,255,0.08); border: 1px solid var(--panel-border); color: #fff;">🖨️ Quick Print</button>
+                </div>
+            </div>
+
+            <div class="guide-grid">
+                <!-- Step 1 -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-step">Step 1</span>
+                        <h3>⚡ System Power On & Hardware Connections</h3>
+                    </div>
+                    <ul class="guide-list">
+                        <li><strong>1. Battery Connection:</strong> Connect a fully charged 4S (14.8V) LiPo battery to the PM07 Power Board XT60 connector.</li>
+                        <li><strong>2. Telemetry Serial:</strong> Verify the GPIO UART cable links Raspberry Pi Pin 8/10 (`/dev/ttyAMA0`) to Pixhawk 4 TELEM1.</li>
+                        <li><strong>3. Start Web Control Center:</strong> Execute the Python server command in terminal:
+                            <br><code>python3 server.py</code></li>
+                        <li><strong>4. Web Interface:</strong> Open browser to <strong>http://localhost:1190</strong> and verify MAVLink Online status.</li>
+                    </ul>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-step">Step 2</span>
+                        <h3>🎮 3D Flight View & Manual Navigation</h3>
+                    </div>
+                    <ul class="guide-list">
+                        <li><strong>• Safety Arming:</strong> Click <strong>⚡ ARM MOTORS</strong> to arm PX4 safety systems before takeoff. Click <strong>⛔ DISARM</strong> for immediate engine cut off.</li>
+                        <li><strong>• Autonomous Flight Actions:</strong> Set desired takeoff altitude (1.0m - 20.0m) and click <strong>🛫 AUTONOMOUS TAKEOFF</strong>, <strong>🛬 LAND</strong>, or <strong>🏠 RETURN HOME (RTL)</strong>.</li>
+                        <li><strong>• Keyboard Nudge Controls:</strong> Use <strong>W/S</strong> for Pitch, <strong>A/D</strong> for Roll strafe, <strong>Q/E</strong> for Yaw rotation, and <strong>Up/Down arrows</strong> for climb rate.</li>
+                    </ul>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-step">Step 3</span>
+                        <h3>📡 MAVLink Serial Port & Telemetry Configuration</h3>
+                    </div>
+                    <ul class="guide-list">
+                        <li><strong>1. Serial Port Selection:</strong> In <strong>⚙️ Hardware & Serial</strong>, choose <code>/dev/ttyAMA0</code> (GPIO UART) or <code>/dev/ttyACM0</code> (USB).</li>
+                        <li><strong>2. Baud Rate Setting:</strong> Select <code>921600 Baud</code> for PX4 high-speed companion computer link, or <code>57600</code> for radio links.</li>
+                        <li><strong>3. Telemetry HUD:</strong> Monitor live pitch/roll attitude, groundspeed, climb rate, 3D GPS Fix (satellite count), and battery voltage (16.8V max).</li>
+                    </ul>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-step">Step 4</span>
+                        <h3>🤖 Gemini AI Multimodal Agent & Voice Command</h3>
+                    </div>
+                    <ul class="guide-list">
+                        <li><strong>1. Gemini Key Setup:</strong> Enter your Google Gemini API Key in the AI panel or under Settings.</li>
+                        <li><strong>2. Hands-Free Voice Control:</strong> Click <strong>🎙️ Hands-Free Voice</strong> to activate real-time speech recognition. Speak flight commands like <em>"Take off to 3 meters"</em> or <em>"Return to home"</em>.</li>
+                        <li><strong>3. Camera Vision Scene Description:</strong> Click <strong>👁️ Describe Sight</strong> to capture eMeet Pixy webcam snapshots for live AI computer vision descriptions.</li>
+                    </ul>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-step">Step 5</span>
+                        <h3>📍 Autonomous Waypoint Mission Planning</h3>
+                    </div>
+                    <ul class="guide-list">
+                        <li><strong>1. Mission Planner Tab:</strong> Switch to <strong>📍 Mission Planner</strong> view.</li>
+                        <li><strong>2. Add Navigation Targets:</strong> Click <strong>➕ Add Waypoint Target</strong> to configure GPS target points and altitudes.</li>
+                        <li><strong>3. Execute Offboard Mission:</strong> Click <strong>🚀 UPLOAD & EXECUTE MISSION</strong> for autonomous GPS waypoint execution.</li>
+                    </ul>
+                </div>
+
+                <!-- Step 6 -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-step">Step 6</span>
+                        <h3>🛡️ Pre-Flight Safeguards & Emergency Procedures</h3>
+                    </div>
+                    <ul class="guide-list">
+                        <li><strong>• Battery Voltage Protection:</strong> Never initiate flight if 4S LiPo battery drops below 14.0V.</li>
+                        <li><strong>• GPS Fix Threshold:</strong> Verify at least 10 satellites and 3D GPS Fix before attempting position hold (POSCTL).</li>
+                        <li><strong>• Emergency Return-To-Launch (RTL):</strong> Press <strong>RTL</strong> at any time during flight to trigger immediate autonomous return to home base.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Printable Footer -->
+            <div class="print-doc-footer">
+                Pixhawk 4 Drone Command Center • Official Flight Operating Manual • End of Document
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Modules -->
+    <script src="lib/html2pdf.bundle.min.js"></script>
+    <script src="drone3d.js?v=1"></script>
+    <script src="gemini_chat.js?v=1"></script>
+    <script src="app.js?v=1"></script>
+</body>
+</html>
