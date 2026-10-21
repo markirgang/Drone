@@ -467,35 +467,61 @@
                 <div class="wiring-card">
                     <div class="wiring-card-header">
                         <span class="card-tag pi">Raspberry Pi</span>
-                        <h3>📡 TELEM1 Serial UART Connection</h3>
+                        <h3>📡 TELEM1 Serial UART & Raspberry Pi 40-Pin GPIO Pinout Guide</h3>
                     </div>
                     <table class="wiring-table">
                         <thead>
                             <tr>
                                 <th>Pi 4/5 Pin</th>
-                                <th>Signal</th>
-                                <th>Pixhawk 4 TELEM1</th>
-                                <th>Description</th>
+                                <th>Signal / BCM</th>
+                                <th>Pixhawk 4 TELEM1 / Drone Hardware Assignment</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><span class="pin-no">Pin 8</span></td>
-                                <td><span class="sig-tx">TXD (GPIO 14)</span></td>
-                                <td>RX Pin (Pin 3)</td>
-                                <td>MAVLink Serial Transmit</td>
+                                <td><span class="pin-no">Pin 1</span></td>
+                                <td><span class="sig-tx">3.3V Power</span></td>
+                                <td>3.3V MAVLink Logic Reference Power Rail</td>
                             </tr>
                             <tr>
-                                <td><span class="pin-no">Pin 10</span></td>
-                                <td><span class="sig-rx">RXD (GPIO 15)</span></td>
-                                <td>TX Pin (Pin 2)</td>
-                                <td>MAVLink Serial Receive</td>
+                                <td><span class="pin-no">Pin 2 / 4</span></td>
+                                <td><span class="sig-tx">5.0V Power</span></td>
+                                <td>5V UBEC Telemetry Power Input Rail</td>
                             </tr>
                             <tr>
                                 <td><span class="pin-no">Pin 6</span></td>
                                 <td><span class="sig-gnd">GND</span></td>
-                                <td>GND Pin (Pin 6)</td>
-                                <td>Common Ground Reference</td>
+                                <td>GND Pin (Pin 6) - Common Ground Reference</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pin-no">Pin 8</span></td>
+                                <td><span class="sig-tx">TXD (GPIO 14)</span></td>
+                                <td>Pixhawk 4 TELEM1 RX Pin (Pin 3) - MAVLink Serial Transmit</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pin-no">Pin 10</span></td>
+                                <td><span class="sig-rx">RXD (GPIO 15)</span></td>
+                                <td>Pixhawk 4 TELEM1 TX Pin (Pin 2) - MAVLink Serial Receive</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pin-no">Pin 11</span></td>
+                                <td><span class="sig-tx">GPIO 17</span></td>
+                                <td>Safety Switch / Arm Indicator LED Output</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pin-no">Pin 12</span></td>
+                                <td><span class="sig-tx">GPIO 18 (PWM0)</span></td>
+                                <td>Camera Gimbal Pitch Servo PWM Control Output</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pin-no">Pin 13</span></td>
+                                <td><span class="sig-tx">GPIO 27</span></td>
+                                <td>Camera Gimbal Roll Servo PWM Control Output</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pin-no">Pin 15</span></td>
+                                <td><span class="sig-tx">GPIO 22</span></td>
+                                <td>MAVLink Companion Mode Select Input</td>
                             </tr>
                         </tbody>
                     </table>
