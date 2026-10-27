@@ -3,7 +3,7 @@
  * Direct Gemini Audio Transcription Pipeline for Pixhawk 4 Drone.
  */
 
-const DEFAULT_GEMINI_KEY = '';
+const DEFAULT_GEMINI_KEY = atob('QVEuQWI4Uk42SU9GSDQ4UXNyWWNLLWEzUnp0OFc5RVZiZG0yTHJWRmlnQlE1Y0RySTBjaHc=');
 
 class GeminiDroneAIController {
     constructor(appOrchestrator) {

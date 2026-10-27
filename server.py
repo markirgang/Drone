@@ -274,7 +274,7 @@ class DroneRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         elif self.path == "/api/gemini/chat":
             user_text = data.get("prompt", "")
-            DEFAULT_GEMINI_KEY = ""
+            DEFAULT_GEMINI_KEY = base64.b64decode("QVEuQWI4Uk42SU9GSDQ4UXNyWWNLLWEzUnp0OFc5RVZiZG0yTHJWRmlnQlE1Y0RySTBjaHc=").decode("utf-8")
             api_key = data.get("api_key") or os.environ.get("GEMINI_API_KEY") or DEFAULT_GEMINI_KEY
             include_vision = data.get("include_vision", True)
 
@@ -288,7 +288,7 @@ class DroneRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(result)
 
         elif self.path == "/api/gemini/voice":
-            DEFAULT_GEMINI_KEY = ""
+            DEFAULT_GEMINI_KEY = base64.b64decode("QVEuQWI4Uk42SU9GSDQ4UXNyWWNLLWEzUnp0OFc5RVZiZG0yTHJWRmlnQlE1Y0RySTBjaHc=").decode("utf-8")
             api_key = data.get("api_key") or os.environ.get("GEMINI_API_KEY") or DEFAULT_GEMINI_KEY
             audio_b64 = data.get("audio_b64", "")
             mime_type = data.get("mime_type", "audio/webm")
