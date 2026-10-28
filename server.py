@@ -19,6 +19,7 @@ import time
 import random
 import urllib.parse
 import re
+import local_audio
 import numpy as np
 
 from mavlink_drone import PixhawkDroneController
@@ -221,6 +222,8 @@ class DroneRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(audio_bytes)
             except Exception as e:
                 self.send_json({"error": str(e)}, status=500)
+        elif self.path.startswith("/api/audio/outputs") or self.path.startswith("/api/audio/sinks"):
+            self.send_json({"outputs": local_audio.list_local_audio_outputs()})
         else:
             super().do_GET()
 
@@ -231,6 +234,15 @@ class DroneRequestHandler(http.server.SimpleHTTPRequestHandler):
             data = json.loads(body)
         except json.JSONDecodeError:
             data = {}
+
+        if self.path in ["/api/audio/play", "/api/audio/play_local"]:
+            audio_bytes, content_type = local_audio.load_audio_bytes_from_url(data.get("url", ""))
+            if not audio_bytes:
+                self.send_json({"error": "Unable to load audio for local playback"}, status=500)
+            else:
+                local_audio.play_audio_on_local_output(audio_bytes, content_type, data.get("speaker", "default"), data.get("volume", 100))
+                self.send_json({"success": True, "speaker": data.get("speaker", "default")})
+            return
 
         if self.path == "/api/drone/arm":
             success = drone.arm()
