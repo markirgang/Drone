@@ -33,18 +33,62 @@ class GeminiDroneAIController {
     }
 
     initDOM() {
+const apiKeyBox = document.getElementById('apiKeyBox');
+        if (apiKeyBox && !document.getElementById('selectKeyType')) {
+            const select = document.createElement('select');
+            select.id = 'selectKeyType';
+            select.style.cssText = 'width: 100%; margin-bottom: 6px; padding: 5px 8px; border-radius: 6px; background: #0c2230; color: #7df0ef; border: 1px solid #1f4258; font-size: 12px; cursor: pointer;';
+            select.innerHTML = `
+                <option value="opencode-go">OpenCode Go API Key</option>
+                <option value="gemini">Google Gemini API Key</option>
+            `;
+            const inputKey = document.getElementById('inputApiKey');
+            apiKeyBox.insertBefore(select, inputKey);
+
+            select.addEventListener('change', (e) => {
+                if (e.target.value === 'opencode-go') {
+                    if (inputKey) inputKey.value = DEFAULT_GEMINI_KEY;
+                    this.apiKey = DEFAULT_GEMINI_KEY;
+                    localStorage.setItem('GEMINI_API_KEY', DEFAULT_GEMINI_KEY);
+                    localStorage.setItem('API_KEY_TYPE', 'opencode-go');
+                    this.addMessage('System', 'Inserted OpenCode Go API Key.');
+                } else if (e.target.value === 'gemini') {
+                    const savedGemini = localStorage.getItem('USER_GEMINI_KEY') || '';
+                    if (inputKey) {
+                        inputKey.value = savedGemini;
+                        inputKey.placeholder = 'Paste Google Gemini API Key...';
+                        inputKey.focus();
+                    }
+                    localStorage.setItem('API_KEY_TYPE', 'gemini');
+                }
+            });
+
+            const currentType = localStorage.getItem('API_KEY_TYPE') || (this.apiKey.startsWith('AQ.') ? 'opencode-go' : 'gemini');
+            select.value = currentType;
+        }
+
         const btnSaveKey = document.getElementById('btnSaveApiKey');
         if (btnSaveKey) {
             btnSaveKey.addEventListener('click', () => {
-                const key = document.getElementById('inputApiKey').value.trim();
+                const inputKey = document.getElementById('inputApiKey');
+                const key = inputKey ? inputKey.value.trim() : '';
+                const sel = document.getElementById('selectKeyType');
                 if (key) {
                     this.apiKey = key;
                     localStorage.setItem('GEMINI_API_KEY', key);
-                    document.getElementById('apiKeyBox').style.display = 'none';
-                    this.addMessage('System', 'Gemini API Key saved successfully!');
+                    if (sel && sel.value === 'gemini') {
+                        localStorage.setItem('USER_GEMINI_KEY', key);
+                        localStorage.setItem('API_KEY_TYPE', 'gemini');
+                    } else if (key.startsWith('AQ.')) {
+                        localStorage.setItem('API_KEY_TYPE', 'opencode-go');
+                    }
+                    const box = document.getElementById('apiKeyBox');
+                    if (box) box.style.display = 'none';
+                    this.addMessage('System', (sel && sel.value === 'opencode-go' ? 'OpenCode Go' : 'Gemini') + ' API Key saved!');
                 }
             });
         }
+
 
         const btnKeySettings = document.getElementById('btnApiKeySettings');
         if (btnKeySettings) {
@@ -181,8 +225,15 @@ class GeminiDroneAIController {
                 this.analyser = this.audioContext.createAnalyser();
                 this.analyser.fftSize = 256;
                 source.connect(this.analyser);
+            const resumeAudio = () => {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+            };
+            document.addEventListener('click', resumeAudio, { once: true });
+            document.addEventListener('pointerdown', resumeAudio, { once: true });
 
-                const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                const timeData = new Uint8Array(this.analyser.fftSize);
                 const vuBar = document.getElementById('micVuBar');
                 const vuVal = document.getElementById('vuVal');
 

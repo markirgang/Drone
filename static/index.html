@@ -18,6 +18,7 @@
 
         <nav class="top-nav-tabs">
             <button class="nav-tab-btn active" data-view="viewAnimation">🎮 3D Flight View & HUD</button>
+            <button class="nav-tab-btn" data-view="viewAlexa">🎙️ Alexa Skills</button>
             <button class="nav-tab-btn" data-view="viewSettings">⚙️ Hardware & Serial</button>
             <button class="nav-tab-btn" data-view="viewMission">📍 Mission Planner</button>
             <button class="nav-tab-btn" data-view="viewWiring">🔌 Wiring Schematic</button>
@@ -126,7 +127,103 @@
                 <button class="btn-dpad" id="btnBwd" title="Pitch Backward (S)">▼</button>
                 <button class="btn-dpad" id="btnTurnR" title="Yaw Right (E)">↻</button>
             </div>
-        </main>
+        
+    <!-- VIEW: ALEXA SKILLS DETECTED UPON DISCOVERY -->
+    <div class="view-screen" id="viewAlexa" style="padding: 24px; max-width: 1200px; margin: 0 auto; overflow-y: auto;">
+        <div style="background: rgba(10, 18, 30, 0.85); border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 14px; padding: 20px 24px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <h2 style="color: #fff; font-size: 1.3rem; margin-bottom: 4px;">🎙️ Alexa Smart Home Skills</h2>
+                    <p style="color: #8a99ad; font-size: 0.82rem;">Devices and skills detected by Alexa upon running <strong>&ldquo;Alexa, discover devices&rdquo;</strong>.</p>
+                </div>
+                <span style="background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.4); font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 999px;">READY FOR DISCOVERY</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 14px; background: rgba(0, 0, 0, 0.35); border-radius: 8px; border: 1px solid rgba(0, 240, 255, 0.2); margin-bottom: 18px; font-size: 0.82rem;">
+                <div><strong style="color: #7df0ef;">Skill Name:</strong> Shobots Drone &middot; <strong style="color: #7df0ef;">Directive Endpoint:</strong> <code style="color: #00f0ff;">https://drone.shobots.party/alexa</code></div>
+                <div style="color: #8a99ad;">Total Endpoints: <strong style="color: #00f0ff;">5</strong></div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <h3 style="color: #fff; font-size: 1.05rem; margin-bottom: 4px;">Discovered Endpoints (5)</h3>
+                <p style="color: #8a99ad; font-size: 0.78rem;">Say <em>&ldquo;Alexa, discover devices&rdquo;</em> in your Alexa mobile app to automatically detect and control each of these endpoints:</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;">
+                
+        <div style="background: rgba(14, 30, 48, 0.75); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #fff; font-size: 0.95rem;">Drone Motors Arming</strong>
+                <span style="font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgba(0, 240, 255, 0.15); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.4);">SWITCH</span>
+            </div>
+            <div style="font-size: 0.78rem; color: #8a99ad; font-style: italic;">“Alexa, arm Drone”</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.72rem;">
+                <span style="color: #00ff88; font-weight: 700;">🟢 Detected &amp; Ready</span>
+                <code style="color: #7df0ef; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">drone_arm</code>
+            </div>
+        </div>
+        
+        <div style="background: rgba(14, 30, 48, 0.75); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #fff; font-size: 0.95rem;">Drone Automated Takeoff</strong>
+                <span style="font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgba(0, 240, 255, 0.15); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.4);">ACTIVITY_TRIGGER</span>
+            </div>
+            <div style="font-size: 0.78rem; color: #8a99ad; font-style: italic;">“Alexa, launch Drone”</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.72rem;">
+                <span style="color: #00ff88; font-weight: 700;">🟢 Detected &amp; Ready</span>
+                <code style="color: #7df0ef; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">drone_takeoff</code>
+            </div>
+        </div>
+        
+        <div style="background: rgba(14, 30, 48, 0.75); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #fff; font-size: 0.95rem;">Drone Return to Home</strong>
+                <span style="font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgba(0, 240, 255, 0.15); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.4);">ACTIVITY_TRIGGER</span>
+            </div>
+            <div style="font-size: 0.78rem; color: #8a99ad; font-style: italic;">“Alexa, recall Drone”</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.72rem;">
+                <span style="color: #00ff88; font-weight: 700;">🟢 Detected &amp; Ready</span>
+                <code style="color: #7df0ef; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">drone_rth</code>
+            </div>
+        </div>
+        
+        <div style="background: rgba(14, 30, 48, 0.75); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #fff; font-size: 0.95rem;">Drone Automated Landing</strong>
+                <span style="font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgba(0, 240, 255, 0.15); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.4);">ACTIVITY_TRIGGER</span>
+            </div>
+            <div style="font-size: 0.78rem; color: #8a99ad; font-style: italic;">“Alexa, land Drone”</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.72rem;">
+                <span style="color: #00ff88; font-weight: 700;">🟢 Detected &amp; Ready</span>
+                <code style="color: #7df0ef; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">drone_land</code>
+            </div>
+        </div>
+        
+        <div style="background: rgba(14, 30, 48, 0.75); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #fff; font-size: 0.95rem;">Drone Night Spotlight</strong>
+                <span style="font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgba(0, 240, 255, 0.15); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.4);">LIGHT</span>
+            </div>
+            <div style="font-size: 0.78rem; color: #8a99ad; font-style: italic;">“Alexa, turn on Drone Light”</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.72rem;">
+                <span style="color: #00ff88; font-weight: 700;">🟢 Detected &amp; Ready</span>
+                <code style="color: #7df0ef; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">drone_light</code>
+            </div>
+        </div>
+        
+            </div>
+
+            <div style="margin-top: 24px; padding: 14px 18px; background: rgba(0, 0, 0, 0.4); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.78rem; color: #8a99ad;">
+                <strong style="color: #fff; display: block; margin-bottom: 4px;">📖 Quick Alexa Setup Guide:</strong>
+                1. Open the Amazon Alexa app &gt; More &gt; Skills &amp; Games &gt; Your Skills &gt; Dev.<br>
+                2. Select <strong>Shobots Drone</strong> and enable it.<br>
+                3. Tell your Echo speaker: <em>&ldquo;Alexa, discover devices&rdquo;</em>.<br>
+                4. All 5 endpoints above will automatically appear in your Alexa Devices tab!
+            </div>
+        </div>
+    </div>
+    
+    </main>
 
         <!-- Right Panel: Gemini AI & Telemetry -->
         <aside class="panel right">
