@@ -879,3 +879,52 @@ body.exporting-pdf .print-doc-header {
 body.exporting-pdf .print-doc-footer {
     display: block !important;
 }
+
+
+/* Top Navigation Tabs - Compact Narrow Layout */
+.app-header {
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    padding: 0 12px !important;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+}
+
+.top-nav-tabs {
+    display: flex !important;
+    gap: 3px !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    padding: 2px 4px !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--panel-border, rgba(255,255,255,0.1)) !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    align-items: center !important;
+}
+.top-nav-tabs::-webkit-scrollbar {
+    display: none !important;
+}
+
+.nav-tab-btn {
+    padding: 4px 7px !important;
+    font-size: 0.73rem !important;
+    font-weight: 600 !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    letter-spacing: -0.2px !important;
+}
+
+.view-screen {
+    height: calc(100vh - 48px) !important;
+    max-height: calc(100vh - 48px) !important;
+    overflow: hidden !important;
+}
