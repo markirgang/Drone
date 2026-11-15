@@ -11,6 +11,7 @@ import json
 import os
 from google import genai
 from google.genai import types
+from ai_engine import call_ai
 
 class GeminiDroneBridge:
     def __init__(self):
@@ -89,7 +90,7 @@ class GeminiDroneBridge:
         except Exception:
             return "None", 0, frame
 
-    def generate_chat_response(self, api_key, user_text="", image_bytes=None):
+    def generate_chat_response(self, api_key, user_text="", image_bytes=None, provider="", model="", ollama_url=""):
         """
         Sends text prompt and camera frame snapshot to Google Gemini AI API.
         Returns: { text: str, action: dict }
@@ -184,37 +185,9 @@ class GeminiDroneBridge:
             temperature=0.7
         )
 
-        try:
-            response = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=contents,
-                config=config
-            )
+        return call_ai(api_key=api_key, contents=contents, config=config, provider=provider, model=model, ollama_url=ollama_url)
 
-            action = None
-            text_response = response.text or ""
-
-            if response.function_calls:
-                call = response.function_calls[0]
-                action = {
-                    "name": call.name,
-                    "args": call.args
-                }
-                if not text_response:
-                    text_response = f"Executing flight command: {call.name}"
-
-            return {
-                "text": text_response,
-                "action": action
-            }
-
-        except Exception as e:
-            return {
-                "text": f"Gemini AI API Error: {str(e)}",
-                "action": None
-            }
-
-    def generate_voice_chat_response(self, api_key, audio_bytes, mime_type="audio/webm", image_bytes=None):
+    def generate_voice_chat_response(self, api_key, audio_bytes, mime_type="audio/webm", image_bytes=None, provider="", model="", ollama_url=""):
         """
         Processes spoken mic audio from eMeet Pixy webcam mic using Gemini Voice Engine.
         """
@@ -313,35 +286,18 @@ class GeminiDroneBridge:
             temperature=0.7
         )
 
-        try:
-            response = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=contents,
-                config=config
-            )
+        res = call_ai(api_key=api_key, contents=contents, config=config, provider=provider, model=model, ollama_url=ollama_url)
+        raw_text = res.get("text") or ""
+        user_transcription = ""
+        text_response = raw_text
+        if "TRANSCRIPTION:" in raw_text:
+            parts = raw_text.split("RESPONSE:", 1)
+            user_transcription = parts[0].replace("TRANSCRIPTION:", "").strip()
+            if len(parts) > 1:
+                text_response = parts[1].strip()
+        return {
+            "transcription": user_transcription,
+            "text": text_response,
+            "action": res.get("action")
+        }
 
-            action = None
-            raw_text = response.text or ""
-            user_transcription = ""
-            text_response = raw_text
-
-            if "TRANSCRIPTION:" in raw_text:
-                parts = raw_text.split("RESPONSE:", 1)
-                user_transcription = parts[0].replace("TRANSCRIPTION:", "").strip()
-                if len(parts) > 1:
-                    text_response = parts[1].strip()
-
-            if response.function_calls:
-                call = response.function_calls[0]
-                action = {"name": call.name, "args": call.args}
-                if not text_response:
-                    text_response = f"Executing flight command: {call.name}"
-
-            return {
-                "transcription": user_transcription,
-                "text": text_response,
-                "action": action
-            }
-
-        except Exception as e:
-            return {"text": f"Gemini Voice Processing Error: {str(e)}", "action": None}

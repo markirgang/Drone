@@ -389,6 +389,12 @@
                 <label class="form-label">Gemini API Key</label>
                 <input type="password" id="settingsApiKey" class="form-input" value="">
             </div>
+            <div class="form-group">
+                <label class="form-label">AI Model Selection</label>
+                <select id="selectModel" class="form-select">
+                </select>
+                <div id="aiModelHint" style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;"></div>
+            </div>
             <button class="btn-preset primary" id="btnSaveSettings">Save Configuration</button>
         </div>
     </div>
@@ -805,6 +811,7 @@
     <script src="drone3d.js?v=1"></script>
     <script src="gemini_chat.js?v=1"></script>
     <script src="/audio_output.js?v=1"></script>
+    <script src="/ai_model_selector.js?v=1"></script>
     <script src="app.js?v=1"></script>
 </body>
 </html>

@@ -1,45 +1,81 @@
 /**
- * Shared speaker / audio output selection.
+ * Shared audio hardware controller: Microphone and Speaker selection.
  *
- * Populates the hardware-settings speaker dropdown with:
- *   - Every audio output exposed by the currently connected browser (remote device).
- *   - Every audio sink exposed by the Raspberry Pi server (local device).
+ * Populates hardware settings dropdowns with:
+ *   - Remote browser computer microphones and speakers (this computer / client).
+ *   - Local Raspberry Pi hardware microphones and speakers (robot server).
  *
- * Selecting a remote device routes browser playback through HTMLMediaElement.setSinkId().
- * Selecting a local device asks the server to play the audio on that sink.
+ * Handles routing:
+ *   - Local speaker: Routes playback to Raspberry Pi hardware via /api/audio/play
+ *   - Remote speaker: Routes playback to client browser speakers via HTMLMediaElement.setSinkId()
+ *   - Local mic: Directs voice requests to Raspberry Pi local mic hardware via /api/gemini/voice
+ *   - Remote mic: Routes voice capture through browser client microphone via getUserMedia
  */
 (function () {
     'use strict';
 
-    const STORAGE_KEY = 'audio_output_target_v1';
-    const SELECT_IDS = ['selectSpeakerSettings', 'selectSpeaker', 'configAudioOutputSelect'];
-    const DYNAMIC_CLASS = 'audio-output-dynamic';
-    const GROUP_CLASS = 'audio-output-group';
+    const SPK_STORAGE_KEY = 'audio_output_target_v1';
+    const MIC_STORAGE_KEY = 'audio_input_target_v1';
+
+    const SELECT_SPEAKER_IDS = [
+        'selectSpeakerSettings', 'selectSpeaker', 'configAudioOutputSelect',
+        'browserSpeaker', 'profileSpeakerSelect'
+    ];
+
+    const SELECT_MIC_IDS = [
+        'selectMicSettings', 'selectMic', 'selectMicDevice',
+        'configMicSelect', 'browserMic', 'profileMicDevice', 'profileMicSource'
+    ];
+
+    const DYNAMIC_CLASS = 'audio-hw-dynamic';
+    const GROUP_CLASS = 'audio-hw-group';
     const originalPlay = HTMLMediaElement.prototype.play;
 
-    function getSelects() {
-        return SELECT_IDS
+    function getSpeakerSelects() {
+        return SELECT_SPEAKER_IDS
             .map(function (id) { return document.getElementById(id); })
             .filter(Boolean);
     }
 
-    function getTarget() {
+    function getMicSelects() {
+        return SELECT_MIC_IDS
+            .map(function (id) { return document.getElementById(id); })
+            .filter(Boolean);
+    }
+
+    function getSpeakerTarget() {
         try {
-            return localStorage.getItem(STORAGE_KEY) || '';
+            return localStorage.getItem(SPK_STORAGE_KEY) || '';
         } catch (e) {
             return '';
         }
     }
 
-    function setTarget(value) {
+    function setSpeakerTarget(value) {
         try {
-            localStorage.setItem(STORAGE_KEY, value || '');
+            localStorage.setItem(SPK_STORAGE_KEY, value || '');
+        } catch (e) {}
+    }
+
+    function getMicTarget() {
+        try {
+            return localStorage.getItem(MIC_STORAGE_KEY) || localStorage.getItem('MIC_DEVICE') || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function setMicTarget(value) {
+        try {
+            localStorage.setItem(MIC_STORAGE_KEY, value || '');
+            localStorage.setItem('MIC_DEVICE', value || '');
         } catch (e) {}
     }
 
     const LEGACY_LOCAL_TARGETS = [
         'default', 'usb_audio', 'usb_speaker', 'aux_35mm', 'audio_jack',
-        'hdmi', 'hdmi_audio', 'bluetooth_speaker', 'emeet_pixy_speaker', 'local'
+        'hdmi', 'hdmi_audio', 'bluetooth_speaker', 'emeet_pixy_speaker', 'local',
+        'emeet_pixy', 'usb_mic'
     ];
 
     function isLocalTarget(value) {
@@ -47,8 +83,8 @@
             (value.indexOf('local:') === 0 || LEGACY_LOCAL_TARGETS.indexOf(value) !== -1);
     }
 
-    function localSinkId(value) {
-        return value.indexOf('local:') === 0 ? value.substring(6) : '';
+    function localId(value) {
+        return typeof value === 'string' && value.indexOf('local:') === 0 ? value.substring(6) : (value || 'default');
     }
 
     function isRemoteTarget(value) {
@@ -63,20 +99,20 @@
         return 'remote:' + id;
     }
 
-    // Route all media element playback to the selected remote sink. When a local
-    // sink is selected, ask the server to play the clip on the Pi speaker instead.
+    // Intercept media playback for local vs. remote speakers
     HTMLMediaElement.prototype.play = function () {
-        const target = getTarget();
+        const target = getSpeakerTarget();
 
         if (isLocalTarget(target)) {
             const src = this.currentSrc || this.src;
-            const sink = localSinkId(target);
+            const sink = localId(target);
             if (src) {
                 try { this.pause(); } catch (e) {}
+                const volume = Math.round((typeof this.volume === 'number' ? this.volume : 1) * 100);
                 fetch('/api/audio/play', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: src, speaker: sink, volume: 100 })
+                    body: JSON.stringify({ url: src, speaker: sink, volume: volume })
                 }).catch(function () {});
                 return Promise.resolve();
             }
@@ -94,14 +130,14 @@
         return originalPlay.call(this);
     };
 
-    // AudioContext is used by the settings test chime and by some visualisers.
+    // AudioContext wrapping
     ['AudioContext', 'webkitAudioContext'].forEach(function (name) {
         const Original = window[name];
         if (!Original) return;
 
         function WrappedAudioContext() {
             const ctx = new Original(...arguments);
-            const target = getTarget();
+            const target = getSpeakerTarget();
             if (isRemoteTarget(target) && typeof ctx.setSinkId === 'function') {
                 ctx.setSinkId(target.substring(7)).catch(function () {});
             }
@@ -112,15 +148,14 @@
         window[name] = WrappedAudioContext;
     });
 
-    let remoteOutputCache = null;
+    let remoteCache = null;
 
-    async function getRemoteOutputs() {
-        if (remoteOutputCache) return remoteOutputCache;
+    async function getRemoteDevices() {
+        if (remoteCache) return remoteCache;
         if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-            return [];
+            return { inputs: [], outputs: [] };
         }
         try {
-            // A short-lived permission request unlocks human-readable device labels.
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(function () {
                 return null;
             });
@@ -128,12 +163,13 @@
                 stream.getTracks().forEach(function (track) { track.stop(); });
             }
             const devices = await navigator.mediaDevices.enumerateDevices();
-            remoteOutputCache = devices.filter(function (device) {
-                return device.kind === 'audiooutput';
-            });
-            return remoteOutputCache;
+            remoteCache = {
+                inputs: devices.filter(function (d) { return d.kind === 'audioinput'; }),
+                outputs: devices.filter(function (d) { return d.kind === 'audiooutput'; })
+            };
+            return remoteCache;
         } catch (e) {
-            return [];
+            return { inputs: [], outputs: [] };
         }
     }
 
@@ -148,13 +184,24 @@
         }
     }
 
+    async function getLocalInputs() {
+        try {
+            const response = await fetch('/api/audio/inputs', { cache: 'no-store' });
+            if (!response.ok) return [];
+            const data = await response.json();
+            return Array.isArray(data.inputs) ? data.inputs : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
     function clearDynamicOptions(select) {
         select.querySelectorAll('option.' + DYNAMIC_CLASS + ', optgroup.' + GROUP_CLASS)
             .forEach(function (node) { node.remove(); });
     }
 
     function appendGroup(select, label, entries, selectedValue) {
-        if (!entries.length) return;
+        if (!entries || !entries.length) return;
 
         const group = document.createElement('optgroup');
         group.className = GROUP_CLASS;
@@ -172,28 +219,30 @@
         select.appendChild(group);
     }
 
-    async function populate() {
-        const selects = getSelects();
+    async function populateSpeakers() {
+        const selects = getSpeakerSelects();
         if (!selects.length) return;
 
-        const results = await Promise.all([getRemoteOutputs(), getLocalOutputs()]);
-        const remoteDevices = results[0];
-        const localDevices = results[1];
+        const results = await Promise.all([getRemoteDevices(), getLocalOutputs()]);
+        const remoteOutputs = results[0].outputs || [];
+        const localOutputs = results[1] || [];
 
         selects.forEach(function (select) {
-            const target = getTarget() || select.value || 'browser';
+            const target = getSpeakerTarget() || select.value || 'browser';
             clearDynamicOptions(select);
 
             appendGroup(select, '🌐 Remote Computer Speakers (This Browser)',
-                remoteDevices.map(function (device, index) {
+                [
+                    { value: 'remote:', label: '🌐 Browser Default Speaker (This Computer)' }
+                ].concat(remoteOutputs.map(function (device, index) {
                     return {
                         value: remoteValue(device.deviceId),
                         label: '🌐 ' + (device.label || ('Remote Speaker ' + (index + 1))) + ' (This Computer)'
                     };
-                }), target);
+                })), target);
 
             appendGroup(select, '🔊 Local Device Speakers (Raspberry Pi Server)',
-                localDevices.map(function (device, index) {
+                localOutputs.map(function (device, index) {
                     return {
                         value: localValue(device.id),
                         label: '🔊 ' + (device.label || ('Local Speaker ' + (index + 1))) +
@@ -202,7 +251,7 @@
                 }), target);
 
             const options = Array.from(select.options);
-            if (target && options.some(function (option) { return option.value === target; })) {
+            if (target && options.some(function (opt) { return opt.value === target; })) {
                 select.value = target;
             } else if (options.length) {
                 select.value = options[0].value;
@@ -210,24 +259,72 @@
         });
     }
 
+    async function populateMicrophones() {
+        const selects = getMicSelects();
+        if (!selects.length) return;
+
+        const results = await Promise.all([getRemoteDevices(), getLocalInputs()]);
+        const remoteInputs = results[0].inputs || [];
+        const localInputs = results[1] || [];
+
+        selects.forEach(function (select) {
+            const target = getMicTarget() || select.value || 'remote:';
+            clearDynamicOptions(select);
+
+            appendGroup(select, '🌐 Remote Computer Microphones (This Browser)',
+                [
+                    { value: 'remote:', label: '🌐 Browser Default Microphone (This Computer)' }
+                ].concat(remoteInputs.map(function (device, index) {
+                    return {
+                        value: remoteValue(device.deviceId),
+                        label: '🌐 ' + (device.label || ('Microphone ' + (index + 1))) + ' (This Computer)'
+                    };
+                })), target);
+
+            appendGroup(select, '🎙️ Local Device Microphones (Raspberry Pi Server)',
+                localInputs.map(function (device, index) {
+                    return {
+                        value: localValue(device.id),
+                        label: '🎙️ ' + (device.label || ('Local Mic ' + (index + 1))) +
+                            (device.default ? ' (Default)' : '') + ' (Raspberry Pi)'
+                    };
+                }), target);
+
+            const options = Array.from(select.options);
+            if (target && options.some(function (opt) { return opt.value === target; })) {
+                select.value = target;
+            } else if (options.length) {
+                select.value = options[0].value;
+            }
+        });
+    }
+
+    async function populate() {
+        await Promise.all([populateSpeakers(), populateMicrophones()]);
+    }
+
     function initialize() {
-        getSelects().forEach(function (select) {
+        getSpeakerSelects().forEach(function (select) {
             select.addEventListener('change', function () {
-                setTarget(select.value);
+                setSpeakerTarget(select.value);
+            });
+        });
+
+        getMicSelects().forEach(function (select) {
+            select.addEventListener('change', function () {
+                setMicTarget(select.value);
             });
         });
 
         if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
             navigator.mediaDevices.addEventListener('devicechange', function () {
-                remoteOutputCache = null;
+                remoteCache = null;
                 populate();
             });
         }
 
         populate();
-        // Some project scripts restore their own saved settings after load; re-apply
-        // the speaker selection once those async configuration fetches have finished.
-        [300, 1200, 2500].forEach(function (delay) {
+        [300, 1000, 2500].forEach(function (delay) {
             setTimeout(populate, delay);
         });
     }
@@ -238,10 +335,41 @@
         initialize();
     }
 
+    // Intercept fetch calls to /api/gemini/voice to route local mic if chosen
+    const originalFetch = window.fetch;
+    window.fetch = function (resource, options) {
+        if (typeof resource === 'string' && resource.indexOf('/api/gemini/voice') !== -1 && options && options.body) {
+            try {
+                const micTarget = getMicTarget();
+                if (isLocalTarget(micTarget)) {
+                    let payload = JSON.parse(options.body);
+                    payload.use_local_mic = true;
+                    payload.source = 'local';
+                    payload.mic_device = localId(micTarget);
+                    options.body = JSON.stringify(payload);
+                }
+            } catch (e) {}
+        }
+        return originalFetch.apply(this, arguments);
+    };
+
+    window.AudioHardware = {
+        populate: populate,
+        refresh: populate,
+        getSpeakerTarget: getSpeakerTarget,
+        setSpeakerTarget: setSpeakerTarget,
+        getMicTarget: getMicTarget,
+        setMicTarget: setMicTarget,
+        isLocalSpeaker: function () { return isLocalTarget(getSpeakerTarget()); },
+        isLocalMic: function () { return isLocalTarget(getMicTarget()); }
+    };
+
     window.AudioOutputDevices = {
         populate: populate,
         refresh: populate,
-        getTarget: getTarget,
-        setTarget: setTarget
+        getTarget: getSpeakerTarget,
+        setTarget: setSpeakerTarget,
+        getMicTarget: getMicTarget,
+        setMicTarget: setMicTarget
     };
 })();
