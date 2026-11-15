@@ -277,7 +277,7 @@ const apiKeyBox = document.getElementById('apiKeyBox');
                         } else if (this.isRecordingAudio && this.speechDetected) {
                             if (this.silenceStart === 0) {
                                 this.silenceStart = performance.now();
-                            } else if (performance.now() - this.silenceStart > 900) {
+                            } else if (performance.now() - this.silenceStart > 2000) {
                                 this.stopAudioChunkRecordingAndSend();
                             }
                         }
