@@ -133,6 +133,200 @@ sudo systemctl daemon-reload &amp;&amp; sudo systemctl enable --now drone-server
             </div>
         </div>
     </div>
+    <!-- VIEW: POOL GITHUB REPOSITORY RASPBERRY PI SETUP -->
+    <div class="view-screen" id="viewPoolPiSetup" style="padding: 24px; max-width: 1200px; margin: 0 auto; overflow-y: auto;">
+        <div style="background: linear-gradient(135deg, rgba(8, 28, 48, 0.95), rgba(4, 16, 30, 0.95)); border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:16px;">
+                <div>
+                  <h2 style="margin:0 0 8px 0; font-size:1.6rem; color:#00f0ff; display:flex; align-items:center; gap:10px;">
+                    <span>🏊</span> Lighthouse Point Pool &mdash; Brand New Raspberry Pi Setup Guide
+                  </h2>
+                  <p style="margin:0; font-size:0.88rem; color:#94a3b8; line-height:1.5;">
+                    Complete step-by-step instructions for deploying the <strong>Pentair IntelliCenter Pool &amp; Spa Controller</strong> on a brand new Raspberry Pi directly from the official GitHub repository:
+                    <a href="https://github.com/markirgang/Pool.git" target="_blank" rel="noopener" style="color:#00f0ff; text-decoration:underline; font-weight:600;">https://github.com/markirgang/Pool.git</a>
+                  </p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <a href="https://github.com/markirgang/Pool.git" target="_blank" rel="noopener" class="btn-preset primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-weight:600; background:linear-gradient(135deg, #00f0ff, #0284c7); color:#03131e; border-radius:6px;">
+                    <span>🐙</span> GitHub Repository
+                  </a>
+                  <a href="https://pool.shobots.party" target="_blank" rel="noopener" class="btn-preset" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-weight:600; background:rgba(0,240,255,0.15); color:#00f0ff; border:1px solid rgba(0,240,255,0.4); border-radius:6px;">
+                    <span>🌐</span> Live Pool App
+                  </a>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
+                <span style="background:rgba(0, 240, 255, 0.12); color:#00f0ff; border:1px solid rgba(0, 240, 255, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">Repository: markirgang/Pool</span>
+                <span style="background:rgba(16, 185, 129, 0.12); color:#10b981; border:1px solid rgba(16, 185, 129, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">Default Port: 2490</span>
+                <span style="background:rgba(168, 85, 247, 0.12); color:#a855f7; border:1px solid rgba(168, 85, 247, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">Target: /home/markirgang/projects/Pool</span>
+                <span style="background:rgba(245, 158, 11, 0.12); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">Pi 4 / Pi 5 (Bookworm 64-bit)</span>
+                <span style="background:rgba(59, 130, 246, 0.12); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">IntelliCenter: Port 6681 (TCP)</span>
+            </div>
+
+            <!-- ONE-LINE QUICK START -->
+            <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(0, 240, 255, 0.45); border-radius:8px; padding:16px; margin-bottom:24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:700; font-size:0.85rem; color:#00f0ff;">⚡ 1-Line Automated Clone &amp; Deploy for New Raspberry Pi</span>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:5px 12px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:600;">📋 Copy 1-Line Command</button>
+                </div>
+                <pre style="margin:0; background:#040e18; color:#38bdf8; padding:12px; border-radius:6px; font-family:monospace; font-size:0.8rem; overflow-x:auto; white-space:pre-wrap;">sudo apt update && sudo apt install -y git python3 python3-pip python3-venv ffmpeg alsa-utils pipewire-bin curl jq && mkdir -p ~/projects && cd ~/projects && git clone https://github.com/markirgang/Pool.git && cd Pool && pip3 install -r requirements.txt --break-system-packages && python3 server.py --port 2490 --host 0.0.0.0</pre>
+            </div>
+
+            <!-- STEP BY STEP GUIDE -->
+            <h3 style="color:#fff; font-size:1.15rem; margin:0 0 16px 0; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:8px;">
+                📋 Step-by-Step Instructions: Deploy Pool on a New Raspberry Pi
+            </h3>
+
+            <!-- Step 1 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">01. Hardware Checklist &amp; Network Setup</div>
+                </div>
+                <div style="font-size:0.82rem; color:#cbd5e1; line-height:1.6;">
+                    <ul>
+                        <li><strong>Raspberry Pi:</strong> Raspberry Pi 4 Model B (2GB+) or Raspberry Pi 5.</li>
+                        <li><strong>MicroSD / SSD:</strong> 32GB+ Class 10 / A2 MicroSD card or USB 3.0 NVMe SSD.</li>
+                        <li><strong>Power Supply:</strong> Official Raspberry Pi USB-C power supply (15W for Pi 4, 27W for Pi 5).</li>
+                        <li><strong>Local Network:</strong> Cat5e/Cat6 Ethernet or 2.4/5GHz Wi-Fi (must be on the same subnet/VLAN as the Pentair IntelliCenter panel).</li>
+                        <li><strong>(Optional) Voice &amp; Vision:</strong> USB webcam/mic (eMeet Pixy / Logitech) plugged into USB 3.0 and HDMI/speaker for Iggy pool assistant.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">02. Flash Raspberry Pi OS (64-bit Bookworm)</div>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.82rem; color:#94a3b8; line-height:1.5;">
+                    Download <strong>Raspberry Pi Imager</strong> from <a href="https://www.raspberrypi.com/software/" target="_blank" rel="noopener" style="color:#00f0ff;">raspberrypi.com/software</a>. Select <code>Raspberry Pi OS (64-bit)</code>. Click <strong>Edit Settings</strong> before flashing:
+                </p>
+                <ul style="margin:0; padding-left:20px; font-size:0.8rem; color:#cbd5e1; line-height:1.5;">
+                    <li>Hostname: <code>pool</code> (accessible as <code>pool.local</code>)</li>
+                    <li>User: <code>markirgang</code> and set your preferred password</li>
+                    <li>Configure Wi-Fi SSID and password</li>
+                    <li>Check <strong>Enable SSH</strong> (password authentication)</li>
+                </ul>
+            </div>
+
+            <!-- Step 3 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">03. First Boot &amp; SSH Connection</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.82rem; color:#94a3b8;">Insert the flashed card into the Pi, connect power, and SSH from your computer terminal:</p>
+                <pre style="margin:0; background:#040e18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.8rem; overflow-x:auto;">ssh markirgang@pool.local</pre>
+            </div>
+
+            <!-- Step 4 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">04. Update OS &amp; Install System Packages</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.82rem; color:#94a3b8;">Install required media codecs, ALSA, PipeWire audio, and Python development tools:</p>
+                <pre style="margin:0; background:#040e18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.8rem; overflow-x:auto; white-space:pre-wrap;">sudo apt update && sudo apt upgrade -y && sudo apt install -y git python3 python3-pip python3-venv ffmpeg alsa-utils pipewire-bin curl jq avahi-daemon && sudo usermod -aG audio,video $USER</pre>
+            </div>
+
+            <!-- Step 5 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">05. Clone the Pool GitHub Repository</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.82rem; color:#94a3b8;">Clone the repository directly from GitHub into <code>~/projects/Pool</code>:</p>
+                <pre style="margin:0; background:#040e18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.8rem; overflow-x:auto; white-space:pre-wrap;">mkdir -p ~/projects && cd ~/projects && git clone https://github.com/markirgang/Pool.git && cd Pool</pre>
+            </div>
+
+            <!-- Step 6 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">06. Install Python Dependencies</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.82rem; color:#94a3b8;">Install pyintellicenter, Google GenAI, gTTS, and OpenCV dependencies:</p>
+                <pre style="margin:0; background:#040e18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.8rem; overflow-x:auto; white-space:pre-wrap;">pip3 install -r requirements.txt --break-system-packages</pre>
+            </div>
+
+            <!-- Step 7 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">07. Configure Pentair IntelliCenter Connection</div>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.82rem; color:#94a3b8;">The server will automatically discover your IntelliCenter panel via UDP broadcast. To manually set a static IP address, edit <code>config.json</code>:</p>
+                <pre style="margin:0; background:#040e18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.75rem; overflow-x:auto;">{
+  "intellicenter": {
+    "host": "192.168.1.50",
+    "port": 6681,
+    "transport": "tcp",
+    "discovery": true
+  }
+}</pre>
+            </div>
+
+            <!-- Step 8 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">08. Test Run the Pool Application</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.82rem; color:#94a3b8;">Start the server directly from the command line:</p>
+                <pre style="margin:0; background:#040e18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.8rem; overflow-x:auto;">python3 server.py --port 2490 --host 0.0.0.0</pre>
+                <p style="margin:8px 0 0 0; font-size:0.82rem; color:#10b981;">Open in your browser: <code>http://pool.local:2490</code> or <code>http://&lt;your-pi-ip&gt;:2490</code></p>
+            </div>
+
+            <!-- Step 9 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">09. Create Systemd Service for 24/7 Autostart on Boot</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy Service</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.82rem; color:#94a3b8;">Install the systemd unit file so the pool server runs automatically in the background:</p>
+                <pre style="margin:0; background:#040e18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.75rem; overflow-x:auto; white-space:pre-wrap;">sudo tee /etc/systemd/system/pool.service &gt; /dev/null &lt;&lt; 'EOF'
+[Unit]
+Description=Lighthouse Point Pool IntelliCenter Controller
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=markirgang
+WorkingDirectory=/home/markirgang/projects/Pool
+ExecStart=/usr/bin/python3 server.py --port 2490 --host 0.0.0.0
+Restart=always
+RestartSec=5
+Environment=PORT=2490
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload && sudo systemctl enable --now pool.service</pre>
+            </div>
+
+            <!-- Step 10 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.92rem; color:#38bdf8;">10. Useful Management &amp; Troubleshooting Commands</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <pre style="margin:0; background:#040e18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.78rem; overflow-x:auto; white-space:pre-wrap;"># Check running status
+sudo systemctl status pool.service
+
+# View live service logs
+journalctl -u pool.service -f
+
+# Restart server after code updates
+sudo systemctl restart pool.service
+
+# Pull latest updates from GitHub
+cd ~/projects/Pool && git pull origin main && sudo systemctl restart pool.service</pre>
+            </div>
+        </div>
+    </div>
+
 
     <script src="lib/three.min.js"></script>
     <script src="lib/OrbitControls.js"></script>
@@ -153,6 +347,7 @@ sudo systemctl daemon-reload &amp;&amp; sudo systemctl enable --now drone-server
             <button class="nav-tab-btn" data-view="viewWiring">🔌 Wiring Schematic</button>
             <button class="nav-tab-btn" data-view="viewInstructions">📖 Guide & Instructions</button>
                     <button class="nav-tab-btn" data-view="viewPiSetup">🍓 Pi Setup</button>
+                    <button class="nav-tab-btn" data-view="viewPoolPiSetup">🏊 Pool Pi Setup</button>
         </nav>
 
         <div class="header-status">
