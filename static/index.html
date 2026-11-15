@@ -5,6 +5,135 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixhawk 4 Drone Command Center & Multimodal AI Hub</title>
     <link rel="stylesheet" href="style.css">
+    <!-- VIEW: RASPBERRY PI GITHUB SETUP -->
+    <div class="view-screen" id="viewPiSetup" style="padding: 24px; max-width: 1200px; margin: 0 auto; overflow-y: auto;">
+        <div style="background: linear-gradient(135deg, rgba(16, 24, 39, 0.95), rgba(8, 14, 26, 0.95)); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:16px;">
+                <div>
+                    <h2 style="margin:0 0 8px 0; font-size:1.6rem; color:var(--accent-cyan, #00f0ff); display:flex; align-items:center; gap:10px;">
+                        <span>🍓</span> Pixhawk 4 Multimodal Drone Hub &mdash; Fresh Raspberry Pi Setup
+                    </h2>
+                    <p style="margin:0; font-size:0.88rem; color:var(--text-muted, #94a3b8); line-height:1.5;">
+                        Deploy this application on a brand new Raspberry Pi 4 or 5 directly from the GitHub repository: <a href="https://github.com/markirgang/Drone.git" target="_blank" style="color:var(--accent-cyan, #00f0ff); text-decoration:underline;">https://github.com/markirgang/Drone.git</a>
+                    </p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <a href="https://github.com/markirgang/Drone.git" target="_blank" class="btn-preset primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-weight:600;">
+                        <span>🐙</span> View on GitHub
+                    </a>
+                </div>
+            </div>
+            
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
+                <span style="background:rgba(0, 240, 255, 0.12); color:#00f0ff; border:1px solid rgba(0, 240, 255, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">GitHub: markirgang/Drone</span>
+                <span style="background:rgba(16, 185, 129, 0.12); color:#10b981; border:1px solid rgba(16, 185, 129, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">Port 1190</span>
+                <span style="background:rgba(168, 85, 247, 0.12); color:#a855f7; border:1px solid rgba(168, 85, 247, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">Branch: main</span>
+                <span style="background:rgba(245, 158, 11, 0.12); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.3); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">Pi 4 / Pi 5 (Bookworm 64-bit)</span>
+            </div>
+
+            <!-- ONE-LINE AUTO INSTALLER -->
+            <div style="background:rgba(0,0,0,0.4); border:1px solid rgba(0, 240, 255, 0.4); border-radius:8px; padding:16px; margin-bottom:24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:700; font-size:0.85rem; color:#00f0ff;">⚡ Quick Start: 1-Line Automated Clone &amp; Install</span>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy Command</button>
+                </div>
+                <pre style="margin:0; background:#070d18; color:#38bdf8; padding:12px; border-radius:6px; font-family:monospace; font-size:0.8rem; overflow-x:auto; white-space:pre-wrap;">sudo apt update && sudo apt install -y git python3 python3-pip python3-venv ffmpeg alsa-utils pipewire-bin && cd ~ && git clone https://github.com/markirgang/Drone.git && cd Drone && pip3 install -r requirements.txt --break-system-packages && python3 server.py --port 1190 --host 0.0.0.0</pre>
+            </div>
+
+            <!-- STEP BY STEP GUIDE -->
+            <h3 style="color:#fff; font-size:1.1rem; margin:0 0 16px 0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
+                📋 Step-by-Step Installation on a New Raspberry Pi
+            </h3>
+
+            <!-- Step 1 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.9rem; color:#38bdf8;">1. Enable Hardware Interfaces (I2C, Camera, Audio Permissions)</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.8rem; color:#94a3b8;">Run this on the new Raspberry Pi to enable required hardware buses and grant user permissions:</p>
+                <pre style="margin:0; background:#070d18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.78rem; overflow-x:auto; white-space:pre-wrap;">sudo raspi-config nonint do_i2c 0 &amp;&amp; sudo raspi-config nonint do_serial_hw 0 &amp;&amp; sudo usermod -aG audio,video,dialout,i2c,gpio $USER</pre>
+            </div>
+
+            <!-- Step 2 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.9rem; color:#38bdf8;">2. Clone Repository from GitHub</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.8rem; color:#94a3b8;">Clone the repository to your user home directory:</p>
+                <pre style="margin:0; background:#070d18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.78rem; overflow-x:auto; white-space:pre-wrap;">cd ~ &amp;&amp; git clone https://github.com/markirgang/Drone.git &amp;&amp; cd Drone</pre>
+            </div>
+
+            <!-- Step 3 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.9rem; color:#38bdf8;">3. Install System &amp; Python Dependencies</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.8rem; color:#94a3b8;">Install audio/video libraries and required Python packages:</p>
+                <pre style="margin:0; background:#070d18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.78rem; overflow-x:auto; white-space:pre-wrap;">sudo apt update &amp;&amp; sudo apt install -y python3-pip python3-numpy python3-opencv ffmpeg alsa-utils pipewire-bin libcamera-tools v4l-utils &amp;&amp; pip3 install -r requirements.txt --break-system-packages</pre>
+            </div>
+
+            <!-- Step 4 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.9rem; color:#38bdf8;">4. Test Run the Application</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.8rem; color:#94a3b8;">Start the server directly to verify connectivity on port 1190:</p>
+                <pre style="margin:0; background:#070d18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.78rem; overflow-x:auto; white-space:pre-wrap;">python3 server.py --port 1190 --host 0.0.0.0</pre>
+                <p style="margin:8px 0 0 0; font-size:0.8rem; color:#10b981;">Access in your browser at <code>http://&lt;your-pi-ip&gt;:1190</code></p>
+            </div>
+
+            <!-- Step 5 -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.9rem; color:#38bdf8;">5. Set Up Systemd Daemon (Auto-Start on Boot)</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy Service</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.8rem; color:#94a3b8;">Configure systemd so the application runs automatically 24/7 in the background:</p>
+                <pre style="margin:0; background:#070d18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.75rem; overflow-x:auto; white-space:pre-wrap;">sudo tee /etc/systemd/system/drone-server.service &gt; /dev/null &lt;&lt; 'EOF'
+[Unit]
+Description=Pixhawk 4 Multimodal Drone Hub
+After=network-online.target sound.target
+
+[Service]
+Type=simple
+User=markirgang
+WorkingDirectory=/home/markirgang/Drone
+ExecStart=/usr/bin/python3 server.py --port 1190 --host 0.0.0.0
+Restart=always
+RestartSec=5
+Environment=PORT=1190
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload &amp;&amp; sudo systemctl enable --now drone-server.service</pre>
+            </div>
+
+            <!-- Step 6: Hardware Notes -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-bottom:16px;">
+                <div style="font-weight:700; font-size:0.9rem; color:#fbbf24; margin-bottom:8px;">⚡ Hardware &amp; Peripheral Checklist for Pixhawk 4 Multimodal Drone Hub</div>
+                <div style="font-size:0.82rem; color:#cbd5e1; line-height:1.6;">
+                    Pixhawk 4 flight controller connected to Raspberry Pi via TELEM2 serial UART (/dev/ttyAMA0 or USB /dev/ttyACM0) running MAVLink at 921600 baud. CSI or USB camera for aerial vision streaming.
+                </div>
+            </div>
+
+            <!-- Step 7: Local AI / Ollama Setup -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-weight:700; font-size:0.9rem; color:#38bdf8;">6. (Optional) Run On-Device AI Models with Ollama</div>
+                    <button onclick="copyCode(this)" style="background:var(--input-bg, #1e293b); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">📋 Copy</button>
+                </div>
+                <p style="margin:0 0 8px 0; font-size:0.8rem; color:#94a3b8;">If you wish to use fully offline local AI models without any cloud API keys:</p>
+                <pre style="margin:0; background:#070d18; color:#a5f3fc; padding:10px; border-radius:6px; font-family:monospace; font-size:0.78rem; overflow-x:auto; white-space:pre-wrap;">curl -fsSL https://ollama.com/install.sh | sh &amp;&amp; ollama run llama3.2</pre>
+            </div>
+        </div>
+    </div>
+
     <script src="lib/three.min.js"></script>
     <script src="lib/OrbitControls.js"></script>
 </head>
@@ -23,6 +152,7 @@
             <button class="nav-tab-btn" data-view="viewMission">📍 Mission Planner</button>
             <button class="nav-tab-btn" data-view="viewWiring">🔌 Wiring Schematic</button>
             <button class="nav-tab-btn" data-view="viewInstructions">📖 Guide & Instructions</button>
+                    <button class="nav-tab-btn" data-view="viewPiSetup">🍓 Pi Setup</button>
         </nav>
 
         <div class="header-status">

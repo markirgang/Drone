@@ -249,4 +249,28 @@
         setModel: setSelected,
         refresh: populateSelectors
     };
+
+    window.copyCode = function (btn) {
+        var box = btn.closest('div');
+        var pre = box ? box.querySelector('pre') : null;
+        var text = pre ? pre.innerText.trim() : '';
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+                var orig = btn.innerText;
+                btn.innerText = '✅ Copied!';
+                setTimeout(function () { btn.innerText = orig; }, 2000);
+            });
+        } else {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            var orig = btn.innerText;
+            btn.innerText = '✅ Copied!';
+            setTimeout(function () { btn.innerText = orig; }, 2000);
+        }
+    };
 })();
