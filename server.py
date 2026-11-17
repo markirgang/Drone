@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """
 Pixhawk 4 Drone Web Server & Multimodal MAVLink Control Hub
@@ -38,6 +39,68 @@ def generate_synthetic_camera_frame():
     t_str = time.strftime("%H:%M:%S")
     cv2.putText(frame, f"LIVE TIME: {t_str}", (220, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
     return frame
+
+
+_TTS_CACHE = {}
+
+VOICE_MAP = {
+    'ai_butler_uk': ('en-GB-RyanNeural', 'en', 'co.uk'),
+    'ai_female_uk': ('en-GB-SoniaNeural', 'en', 'co.uk'),
+    'ai_male_uk': ('en-GB-RyanNeural', 'en', 'co.uk'),
+    'ai_female_us': ('en-US-JennyNeural', 'en', 'com'),
+    'ai_male_us': ('en-US-GuyNeural', 'en', 'us'),
+    'ai_female_au': ('en-AU-NatashaNeural', 'en', 'com.au'),
+    'ai_male_au': ('en-AU-WilliamMultilingualNeural', 'en', 'com.au'),
+    'ai_female_ca': ('en-CA-ClaraNeural', 'en', 'ca'),
+    'ai_male_ca': ('en-CA-LiamNeural', 'en', 'ca'),
+    'ai_female_in': ('en-IN-NeerjaNeural', 'en', 'co.in'),
+    'ai_male_in': ('en-IN-PrabhatNeural', 'en', 'co.in'),
+    'ai_female_ie': ('en-IE-EmilyNeural', 'en', 'ie'),
+    'ai_male_ie': ('en-IE-ConnorNeural', 'en', 'ie'),
+    'ai_female_za': ('en-ZA-LeahNeural', 'en', 'co.za'),
+    'ai_male_za': ('en-ZA-LukeNeural', 'en', 'co.za'),
+    'ai_female_ng': ('en-NG-EzinneNeural', 'en', 'com.ng'),
+    'ai_male_ng': ('en-NG-AbeoNeural', 'en', 'com.ng'),
+    'ai_female_nz': ('en-NZ-MollyNeural', 'en', 'co.nz'),
+    'ai_male_nz': ('en-NZ-MitchellNeural', 'en', 'co.nz'),
+}
+
+async def _gen_edge_tts(text: str, voice: str) -> bytes:
+    import edge_tts
+    comm = edge_tts.Communicate(text, voice)
+    chunks = []
+    async for c in comm.stream():
+        if c['type'] == 'audio':
+            chunks.append(c['data'])
+    return b''.join(chunks)
+
+def handle_tts_speak(text: str, voice_id: str = "ai_butler_uk") -> bytes:
+    clean = re.sub(r'\*[^*]*\*', '', text or "Hello").strip() or "Hello"
+    voice_key = str(voice_id or "ai_butler_uk").strip()
+    cache_key = (clean, voice_key)
+    if cache_key in _TTS_CACHE:
+        return _TTS_CACHE[cache_key]
+
+    edge_voice, lang, tld = VOICE_MAP.get(voice_key, ('en-GB-RyanNeural', 'en', 'co.uk'))
+    try:
+        data = asyncio.run(_gen_edge_tts(clean, edge_voice))
+        if data:
+            if len(_TTS_CACHE) > 64:
+                _TTS_CACHE.pop(next(iter(_TTS_CACHE)))
+            _TTS_CACHE[cache_key] = data
+            return data
+    except Exception:
+        pass
+
+    import io
+    from gtts import gTTS
+    mp3 = io.BytesIO()
+    gTTS(text=clean, lang=lang, tld=tld).write_to_fp(mp3)
+    data = mp3.getvalue()
+    if len(_TTS_CACHE) > 64:
+        _TTS_CACHE.pop(next(iter(_TTS_CACHE)))
+    _TTS_CACHE[cache_key] = data
+    return data
 
 class CameraStream:
     def __init__(self, source="usb"):
@@ -190,46 +253,13 @@ class DroneRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.serve_camera_frame()
         elif self.path.startswith("/api/tts/speak"):
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            text_to_speak = query_params.get("text", ["Hello! Pixhawk Drone operational."])[0]
-            voice_id = query_params.get("voice", ["ai_female_us"])[0]
-
+            text_to_speak = query_params.get("text", ["Hello!"])[0]
+            voice_id = query_params.get("voice", ["ai_butler_uk"])[0]
             try:
-                from gtts import gTTS
-                import io
-                clean_text = re.sub(r'\*[^*]*\*', '', text_to_speak).strip()
-                if not clean_text:
-                    clean_text = "Pixhawk Drone system ready."
-
-                tld_map = {
-                    "ai_female_us": ("en", "com"),
-                    "ai_male_us": ("en", "us"),
-                    "ai_female_uk": ("en", "co.uk"),
-                    "ai_male_uk": ("en", "co.uk"),
-                    "ai_female_au": ("en", "com.au"),
-                    "ai_male_au": ("en", "com.au"),
-                    "ai_female_ca": ("en", "ca"),
-                    "ai_male_ca": ("en", "ca"),
-                    "ai_female_in": ("en", "co.in"),
-                    "ai_male_in": ("en", "co.in"),
-                    "ai_female_ie": ("en", "ie"),
-                    "ai_male_ie": ("en", "ie"),
-                    "ai_female_za": ("en", "co.za"),
-                    "ai_male_za": ("en", "co.za"),
-                    "ai_female_ng": ("en", "com.ng"),
-                    "ai_male_ng": ("en", "com.ng"),
-                    "ai_female_nz": ("en", "co.nz"),
-                    "ai_male_nz": ("en", "co.nz"),
-                }
-
-                lang, tld = tld_map.get(voice_id, ("en", "com"))
-                tts = gTTS(text=clean_text, lang=lang, tld=tld)
-                mp3_fp = io.BytesIO()
-                tts.write_to_fp(mp3_fp)
-                mp3_fp.seek(0)
-                audio_bytes = mp3_fp.read()
-
+                audio_bytes = local_audio.synthesize_voice(text_to_speak, voice_id)
                 self.send_response(200)
                 self.send_header('Content-type', 'audio/mpeg')
+                self.send_header('Content-Length', str(len(audio_bytes)))
                 self.send_header('Cache-Control', 'no-cache')
                 self.end_headers()
                 self.wfile.write(audio_bytes)

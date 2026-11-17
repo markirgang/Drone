@@ -11,7 +11,7 @@ class GeminiDroneAIController {
         this.apiKey = localStorage.getItem('GEMINI_API_KEY') || DEFAULT_GEMINI_KEY;
         this.micSensitivity = parseFloat(localStorage.getItem('MIC_SENSITIVITY')) || 100;
         this.isListening = false;
-        this.aiSpeaking = false;
+        this.aiSpeaking = false; if (window.AudioHardware) window.AudioHardware.setAiSpeaking(false);
         this.gestureActive = true;
 
         this.audioContext = null;
@@ -277,7 +277,7 @@ const apiKeyBox = document.getElementById('apiKeyBox');
                         } else if (this.isRecordingAudio && this.speechDetected) {
                             if (this.silenceStart === 0) {
                                 this.silenceStart = performance.now();
-                            } else if (performance.now() - this.silenceStart > 600) {
+                            } else if (performance.now() - this.silenceStart > 380) {
                                 this.stopAudioChunkRecordingAndSend();
                             }
                         }
@@ -336,7 +336,7 @@ const apiKeyBox = document.getElementById('apiKeyBox');
             if (this.audioChunks.length > 0) {
                 const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
                 const blob = new Blob(this.audioChunks, { type: mimeType });
-                if (blob.size >= 4000 && duration >= 400 && voiced >= 2) {
+                if (blob.size >= 2500 && duration >= 300 && voiced >= 2) {
                     this.sendVoiceBlobToGemini(blob, mimeType);
                 } else if (this.isListening) {
                     if (statusText) statusText.textContent = 'Status: Listening for speech input...';
@@ -408,9 +408,9 @@ const apiKeyBox = document.getElementById('apiKeyBox');
         this.audioPlayer = new Audio();
         this.audioPlayer.crossOrigin = "anonymous";
 
-        this.audioPlayer.onplay = () => { this.aiSpeaking = true; };
-        this.audioPlayer.onended = () => { this.aiSpeaking = false; };
-        this.audioPlayer.onerror = () => { this.aiSpeaking = false; };
+        this.audioPlayer.onplay = () => { this.aiSpeaking = true; if (window.AudioHardware) window.AudioHardware.setAiSpeaking(true); };
+        this.audioPlayer.onended = () => { this.aiSpeaking = false; if (window.AudioHardware) window.AudioHardware.setAiSpeaking(false); };
+        this.audioPlayer.onerror = () => { this.aiSpeaking = false; if (window.AudioHardware) window.AudioHardware.setAiSpeaking(false); };
     }
 
     speak(text) {
@@ -423,8 +423,8 @@ const apiKeyBox = document.getElementById('apiKeyBox');
         this.audioPlayer.play().catch(err => {
             if (this.synth) {
                 const utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.onstart = () => { this.aiSpeaking = true; };
-                utterance.onend = () => { this.aiSpeaking = false; };
+                utterance.onstart = () => { this.aiSpeaking = true; if (window.AudioHardware) window.AudioHardware.setAiSpeaking(true); };
+                utterance.onend = () => { this.aiSpeaking = false; if (window.AudioHardware) window.AudioHardware.setAiSpeaking(false); };
                 this.synth.speak(utterance);
             }
         });

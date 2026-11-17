@@ -2,18 +2,21 @@
  * Shared audio hardware controller: Microphone, Speaker, Voice & Trigger Name system.
  *
  * Requirements:
- * 1. Allow user to specify which speaker and mic to use in both local Raspberry Pi and browser computer.
- * 2. User must choose between local mic and speaker, but NOT both at the same time (mutual exclusion).
- * 3. Male and female voices of many accents available in dropdowns, matching Raspberry Pi and browser.
- * 4. Project-specific wake/trigger name matching anywhere in continuous sentences.
- * 5. Minimal voice latency (fast turn-around).
+ * 1. Low latency: Minimal lag between user finishing speaking and verbal response.
+ * 2. Hardware selection: User selects either Browser Computer (Mic & Speaker) OR Local Pi (Mic & Speaker).
+ * 3. Half-duplex protection: Only one (mic or speaker) active at the same time to prevent acoustic feedback.
+ * 4. Default voice: British Butler voice, with many voices available on both Pi and browser.
+ * 5. Project wake/trigger name matching anywhere in continuous sentences.
  */
 (function () {
     'use strict';
 
+    const HW_MODE_STORAGE_KEY = 'audio_hardware_mode_v2';
     const SPK_STORAGE_KEY = 'audio_output_target_v1';
     const MIC_STORAGE_KEY = 'audio_input_target_v1';
     const VOICE_STORAGE_KEY = 'audio_voice_preset_v1';
+
+    const DEFAULT_VOICE = 'ai_butler_uk'; // Default British Butler voice
 
     const SELECT_SPEAKER_IDS = [
         'selectSpeakerSettings', 'selectSpeaker', 'configAudioOutputSelect',
@@ -31,24 +34,25 @@
     ];
 
     const SHARED_VOICE_PRESETS = [
-        { id: 'ai_female_us', label: '♀️ Female (US Accent)', lang: 'en-US' },
-        { id: 'ai_male_us', label: '♂️ Male (US Accent)', lang: 'en-US' },
-        { id: 'ai_female_uk', label: '♀️ Female (British UK Accent)', lang: 'en-GB' },
-        { id: 'ai_male_uk', label: '♂️ Male (British UK Accent)', lang: 'en-GB' },
-        { id: 'ai_female_au', label: '♀️ Female (Australian Accent)', lang: 'en-AU' },
-        { id: 'ai_male_au', label: '♂️ Male (Australian Accent)', lang: 'en-AU' },
-        { id: 'ai_female_ca', label: '♀️ Female (Canadian Accent)', lang: 'en-CA' },
-        { id: 'ai_male_ca', label: '♂️ Male (Canadian Accent)', lang: 'en-CA' },
-        { id: 'ai_female_in', label: '♀️ Female (Indian Accent)', lang: 'en-IN' },
-        { id: 'ai_male_in', label: '♂️ Male (Indian Accent)', lang: 'en-IN' },
-        { id: 'ai_female_ie', label: '♀️ Female (Irish Accent)', lang: 'en-IE' },
-        { id: 'ai_male_ie', label: '♂️ Male (Irish Accent)', lang: 'en-IE' },
-        { id: 'ai_female_za', label: '♀️ Female (South African Accent)', lang: 'en-ZA' },
-        { id: 'ai_male_za', label: '♂️ Male (South African Accent)', lang: 'en-ZA' },
-        { id: 'ai_female_ng', label: '♀️ Female (Nigerian Accent)', lang: 'en-NG' },
-        { id: 'ai_male_ng', label: '♂️ Male (Nigerian Accent)', lang: 'en-NG' },
-        { id: 'ai_female_nz', label: '♀️ Female (New Zealand Accent)', lang: 'en-NZ' },
-        { id: 'ai_male_nz', label: '♂️ Male (New Zealand Accent)', lang: 'en-NZ' }
+        { id: 'ai_butler_uk', label: '🎩 British Butler (Polite UK Male)', lang: 'en-GB' },
+        { id: 'ai_female_uk', label: '♀️ British Female (Sonia UK)', lang: 'en-GB' },
+        { id: 'ai_male_uk', label: '♂️ British Male (Gentleman UK)', lang: 'en-GB' },
+        { id: 'ai_female_us', label: '♀️ US Female (Jenny US)', lang: 'en-US' },
+        { id: 'ai_male_us', label: '♂️ US Male (Guy US)', lang: 'en-US' },
+        { id: 'ai_female_au', label: '♀️ Australian Female (Natasha AU)', lang: 'en-AU' },
+        { id: 'ai_male_au', label: '♂️ Australian Male (William AU)', lang: 'en-AU' },
+        { id: 'ai_female_ca', label: '♀️ Canadian Female (Clara CA)', lang: 'en-CA' },
+        { id: 'ai_male_ca', label: '♂️ Canadian Male (Liam CA)', lang: 'en-CA' },
+        { id: 'ai_female_in', label: '♀️ Indian Female (Neerja IN)', lang: 'en-IN' },
+        { id: 'ai_male_in', label: '♂️ Indian Male (Prabhat IN)', lang: 'en-IN' },
+        { id: 'ai_female_ie', label: '♀️ Irish Female (Emily IE)', lang: 'en-IE' },
+        { id: 'ai_male_ie', label: '♂️ Irish Male (Connor IE)', lang: 'en-IE' },
+        { id: 'ai_female_za', label: '♀️ South African Female (Leah ZA)', lang: 'en-ZA' },
+        { id: 'ai_male_za', label: '♂️ South African Male (Luke ZA)', lang: 'en-ZA' },
+        { id: 'ai_female_ng', label: '♀️ Nigerian Female (Ezinne NG)', lang: 'en-NG' },
+        { id: 'ai_male_ng', label: '♂️ Nigerian Male (Abeo NG)', lang: 'en-NG' },
+        { id: 'ai_female_nz', label: '♀️ New Zealand Female (Molly NZ)', lang: 'en-NZ' },
+        { id: 'ai_male_nz', label: '♂️ New Zealand Male (Mitchell NZ)', lang: 'en-NZ' }
     ];
 
     const PROJECT_TRIGGER_NAMES = {
@@ -71,6 +75,33 @@
     const DYNAMIC_CLASS = 'audio-hw-dynamic';
     const GROUP_CLASS = 'audio-hw-group';
     const originalPlay = HTMLMediaElement.prototype.play;
+
+    let isAiSpeakingNow = false;
+
+    function getHardwareMode() {
+        try {
+            return localStorage.getItem(HW_MODE_STORAGE_KEY) || 'browser';
+        } catch (e) {
+            return 'browser';
+        }
+    }
+
+    function setHardwareMode(mode) {
+        try {
+            localStorage.setItem(HW_MODE_STORAGE_KEY, mode === 'local' ? 'local' : 'browser');
+        } catch (e) {}
+
+        if (mode === 'local') {
+            setSpeakerTarget('local:default');
+            setMicTarget('local:default');
+            showAudioNotice('Switched active audio to Local Raspberry Pi Hardware (Pi Mic & Pi Speaker).');
+        } else {
+            setSpeakerTarget('remote:');
+            setMicTarget('remote:');
+            showAudioNotice('Switched active audio to Browser Computer Hardware (Browser Mic & Browser Speaker).');
+        }
+        populate();
+    }
 
     function getSpeakerSelects() {
         return SELECT_SPEAKER_IDS
@@ -108,16 +139,16 @@
 
     function getVoicePreset() {
         try {
-            return localStorage.getItem('AI_VOICE') || localStorage.getItem(VOICE_STORAGE_KEY) || 'ai_female_us';
+            return localStorage.getItem('AI_VOICE') || localStorage.getItem(VOICE_STORAGE_KEY) || DEFAULT_VOICE;
         } catch (e) {
-            return 'ai_female_us';
+            return DEFAULT_VOICE;
         }
     }
 
     function setVoicePreset(val) {
         try {
-            localStorage.setItem('AI_VOICE', val || 'ai_female_us');
-            localStorage.setItem(VOICE_STORAGE_KEY, val || 'ai_female_us');
+            localStorage.setItem('AI_VOICE', val || DEFAULT_VOICE);
+            localStorage.setItem(VOICE_STORAGE_KEY, val || DEFAULT_VOICE);
         } catch (e) {}
     }
 
@@ -170,19 +201,11 @@
         try {
             localStorage.setItem(SPK_STORAGE_KEY, value || 'remote:');
         } catch (e) {}
-
-        // Mutual exclusion: User must choose between local mic and speaker, but NOT both at the same time
+        // Align mode
         if (isLocalTarget(value)) {
-            var curMic = getMicTarget();
-            if (isLocalTarget(curMic)) {
-                try {
-                    localStorage.setItem(MIC_STORAGE_KEY, 'remote:');
-                    localStorage.setItem('MIC_DEVICE', 'remote:');
-                } catch (e) {}
-                getMicSelects().forEach(function (s) { s.value = 'remote:'; });
-                showAudioNotice('Switched microphone to Browser: local Pi mic & local Pi speaker cannot both be active simultaneously.');
-                populateMicrophones();
-            }
+            try { localStorage.setItem(HW_MODE_STORAGE_KEY, 'local'); } catch (e) {}
+        } else {
+            try { localStorage.setItem(HW_MODE_STORAGE_KEY, 'browser'); } catch (e) {}
         }
     }
 
@@ -191,24 +214,39 @@
             localStorage.setItem(MIC_STORAGE_KEY, value || 'remote:');
             localStorage.setItem('MIC_DEVICE', value || 'remote:');
         } catch (e) {}
-
-        // Mutual exclusion: User must choose between local mic and speaker, but NOT both at the same time
+        // Align mode
         if (isLocalTarget(value)) {
-            var curSpk = getSpeakerTarget();
-            if (isLocalTarget(curSpk)) {
-                try {
-                    localStorage.setItem(SPK_STORAGE_KEY, 'remote:');
-                } catch (e) {}
-                getSpeakerSelects().forEach(function (s) { s.value = 'remote:'; });
-                showAudioNotice('Switched speaker to Browser: local Pi mic & local Pi speaker cannot both be active simultaneously.');
-                populateSpeakers();
-            }
+            try { localStorage.setItem(HW_MODE_STORAGE_KEY, 'local'); } catch (e) {}
+        } else {
+            try { localStorage.setItem(HW_MODE_STORAGE_KEY, 'browser'); } catch (e) {}
         }
+    }
+
+    // Half-duplex state management: only one (mic or speaker) active at the same time
+    function setAiSpeaking(speaking) {
+        isAiSpeakingNow = Boolean(speaking);
+        // If speaking, temporarily mute browser microphone tracks so robot never hears itself
+        if (window._globalMicStream) {
+            window._globalMicStream.getAudioTracks().forEach(function (t) {
+                t.enabled = !isAiSpeakingNow;
+            });
+        }
+    }
+
+    function isAiSpeaking() {
+        return isAiSpeakingNow;
     }
 
     // Intercept media playback for local vs. remote speakers
     HTMLMediaElement.prototype.play = function () {
         const target = getSpeakerTarget();
+
+        // Enforce half-duplex: AI starts speaking -> mic muted
+        setAiSpeaking(true);
+        const onEnd = function () { setAiSpeaking(false); };
+        this.addEventListener('ended', onEnd, { once: true });
+        this.addEventListener('pause', onEnd, { once: true });
+        this.addEventListener('error', onEnd, { once: true });
 
         if (isLocalTarget(target)) {
             const src = this.currentSrc || this.src;
@@ -267,6 +305,7 @@
                 return null;
             });
             if (stream) {
+                window._globalMicStream = stream;
                 stream.getTracks().forEach(function (track) { track.stop(); });
             }
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -319,10 +358,6 @@
             option.className = DYNAMIC_CLASS;
             option.value = entry.value;
             option.textContent = entry.label;
-            if (entry.disabled) {
-                option.disabled = true;
-                option.style.color = '#64748b';
-            }
             if (entry.value === selectedValue) option.selected = true;
             group.appendChild(option);
         });
@@ -337,14 +372,9 @@
         const results = await Promise.all([getRemoteDevices(), getLocalOutputs()]);
         const remoteOutputs = results[0].outputs || [];
         const localOutputs = results[1] || [];
-        const localMicActive = isLocalTarget(getMicTarget());
 
         selects.forEach(function (select) {
             let target = getSpeakerTarget() || select.value || 'remote:';
-            if (localMicActive && isLocalTarget(target)) {
-                target = 'remote:';
-                setSpeakerTarget('remote:');
-            }
             clearDynamicOptions(select);
 
             appendGroup(select, '🌐 Remote Computer Speakers (This Browser)',
@@ -357,23 +387,20 @@
                     };
                 })), target);
 
-            appendGroup(select, '🔊 Local Device Speakers (Raspberry Pi Server)' + (localMicActive ? ' [Disabled: Local Pi Mic Active]' : ''),
+            appendGroup(select, '🔊 Local Device Speakers (Raspberry Pi Server)',
                 localOutputs.map(function (device, index) {
                     return {
                         value: localValue(device.id),
                         label: '🔊 ' + (device.label || ('Local Speaker ' + (index + 1))) +
-                            (device.default ? ' (Default)' : '') + ' (Raspberry Pi)' +
-                            (localMicActive ? ' [Unavailable: Local mic in use]' : ''),
-                        disabled: localMicActive
+                            (device.default ? ' (Default)' : '') + ' (Raspberry Pi)'
                     };
                 }), target);
 
             const options = Array.from(select.options);
-            if (target && options.some(function (opt) { return opt.value === target && !opt.disabled; })) {
+            if (target && options.some(function (opt) { return opt.value === target; })) {
                 select.value = target;
             } else if (options.length) {
-                const first = options.find(function (opt) { return !opt.disabled; });
-                if (first) select.value = first.value;
+                select.value = options[0].value;
             }
         });
     }
@@ -385,14 +412,9 @@
         const results = await Promise.all([getRemoteDevices(), getLocalInputs()]);
         const remoteInputs = results[0].inputs || [];
         const localInputs = results[1] || [];
-        const localSpkActive = isLocalTarget(getSpeakerTarget());
 
         selects.forEach(function (select) {
             let target = getMicTarget() || select.value || 'remote:';
-            if (localSpkActive && isLocalTarget(target)) {
-                target = 'remote:';
-                setMicTarget('remote:');
-            }
             clearDynamicOptions(select);
 
             appendGroup(select, '🌐 Remote Computer Microphones (This Browser)',
@@ -405,23 +427,20 @@
                     };
                 })), target);
 
-            appendGroup(select, '🎙️ Local Device Microphones (Raspberry Pi Server)' + (localSpkActive ? ' [Disabled: Local Pi Speaker Active]' : ''),
+            appendGroup(select, '🎙️ Local Device Microphones (Raspberry Pi Server)',
                 localInputs.map(function (device, index) {
                     return {
                         value: localValue(device.id),
                         label: '🎙️ ' + (device.label || ('Local Mic ' + (index + 1))) +
-                            (device.default ? ' (Default)' : '') + ' (Raspberry Pi)' +
-                            (localSpkActive ? ' [Unavailable: Local speaker in use]' : ''),
-                        disabled: localSpkActive
+                            (device.default ? ' (Default)' : '') + ' (Raspberry Pi)'
                     };
                 }), target);
 
             const options = Array.from(select.options);
-            if (target && options.some(function (opt) { return opt.value === target && !opt.disabled; })) {
+            if (target && options.some(function (opt) { return opt.value === target; })) {
                 select.value = target;
             } else if (options.length) {
-                const first = options.find(function (opt) { return !opt.disabled; });
-                if (first) select.value = first.value;
+                select.value = options[0].value;
             }
         });
     }
@@ -433,7 +452,7 @@
 
         selects.forEach(function (select) {
             const existingValues = Array.from(select.options).map(function (o) { return o.value; });
-            const hasPresets = existingValues.indexOf('ai_female_us') !== -1;
+            const hasPresets = existingValues.indexOf('ai_butler_uk') !== -1;
             if (!hasPresets || select.options.length < 8) {
                 select.innerHTML = '';
                 SHARED_VOICE_PRESETS.forEach(function (v) {
@@ -497,14 +516,12 @@
         getSpeakerSelects().forEach(function (select) {
             select.addEventListener('change', function () {
                 setSpeakerTarget(select.value);
-                populateMicrophones();
             });
         });
 
         getMicSelects().forEach(function (select) {
             select.addEventListener('change', function () {
                 setMicTarget(select.value);
-                populateSpeakers();
             });
         });
 
@@ -555,6 +572,8 @@
         populate: populate,
         refresh: populate,
         populateVoices: populateVoices,
+        getHardwareMode: getHardwareMode,
+        setHardwareMode: setHardwareMode,
         getSpeakerTarget: getSpeakerTarget,
         setSpeakerTarget: setSpeakerTarget,
         getMicTarget: getMicTarget,
@@ -564,6 +583,8 @@
         getVoices: function () { return SHARED_VOICE_PRESETS; },
         isLocalSpeaker: function () { return isLocalTarget(getSpeakerTarget()); },
         isLocalMic: function () { return isLocalTarget(getMicTarget()); },
+        setAiSpeaking: setAiSpeaking,
+        isAiSpeaking: isAiSpeaking,
         getProjectName: detectProjectKey,
         getTriggerNames: getProjectTriggerNames,
         containsTriggerName: containsTriggerName
