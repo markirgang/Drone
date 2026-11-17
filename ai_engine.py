@@ -34,9 +34,9 @@ OPENCODE_BASE_URL = "https://opencode.ai/inference/go/google/"
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 
 DEFAULT_MODELS = {
-    "opencode-go": "gemini-4-argon",
-    "google": "gemini-3.8-flash",
-    "gemini": "gemini-3.8-flash",
+    "opencode-go": "gemini-3.5-flash-lite",
+    "google": "gemini-3.5-flash-lite",
+    "gemini": "gemini-3.5-flash-lite",
     "ollama": "llama3.2",
 }
 

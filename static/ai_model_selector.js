@@ -22,7 +22,7 @@
     let cachedModelsData = null;
 
     function getSelectedModel() {
-        return localStorage.getItem(MODEL_STORAGE_KEY) || 'gemini-4-argon';
+        return localStorage.getItem(MODEL_STORAGE_KEY) || 'gemini-3.5-flash-lite';
     }
 
     function getSelectedProvider() {
@@ -61,13 +61,13 @@
         return {
             providers: ['opencode-go', 'google', 'ollama'],
             default_models: {
-                'opencode-go': 'gemini-4-argon',
-                'google': 'gemini-3.8-flash',
+                'opencode-go': 'gemini-3.5-flash-lite',
+                'google': 'gemini-3.5-flash-lite',
                 'ollama': 'llama3.2'
             },
             models: {
-                'opencode-go': ['gemini-4-argon', 'gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-flash-latest'],
-                'google': ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-flash-latest', 'gemini-pro-latest'],
+                'opencode-go': ['gemini-3.5-flash-lite', 'gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-flash-latest'],
+                'google': ['gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-flash-latest', 'gemini-pro-latest'],
                 'ollama': ['llama3.2', 'mistral', 'qwen2.5', 'deepseek-r1', 'phi3', 'gemma2', 'llama3.1', 'llava']
             },
             live_ollama_detected: false
@@ -151,7 +151,7 @@
             (data.models['opencode-go'] || []).forEach(function (m) {
                 const opt = document.createElement('option');
                 opt.value = 'opencode-go:' + m;
-                opt.textContent = '⚡ ' + m + (m === 'gemini-4-argon' ? ' (Default)' : '');
+                opt.textContent = '⚡ ' + m + (m === 'gemini-3.5-flash-lite' ? ' (Default)' : '');
                 if (opt.value === compoundTarget || (savedProvider === 'opencode-go' && savedModel === m)) {
                     opt.selected = true;
                 }
@@ -165,7 +165,7 @@
             (data.models['google'] || []).forEach(function (m) {
                 const opt = document.createElement('option');
                 opt.value = 'google:' + m;
-                opt.textContent = '✨ ' + m + (m === 'gemini-3.8-flash' ? ' (Fast Multimodal)' : '');
+                opt.textContent = '✨ ' + m + (m === 'gemini-3.5-flash-lite' ? ' (Fast Multimodal)' : '');
                 if (opt.value === compoundTarget || (savedProvider === 'google' && savedModel === m)) {
                     opt.selected = true;
                 }

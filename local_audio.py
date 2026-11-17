@@ -236,11 +236,25 @@ def load_audio_bytes_from_url(url):
             text = re.sub(r"\*[^*]*\*", "", query.get("text", ["Hello!"])[0]).strip() or "Hello!"
             voice = query.get("voice", ["ai_female_us"])[0]
             tld_map = {
-                "ai_female_us": ("en", "com"),
-                "ai_male_us": ("en", "us"),
-                "ai_male_uk": ("en", "co.uk"),
-                "ai_female_uk": ("en", "co.uk"),
-            }
+                    "ai_female_us": ("en", "com"),
+                    "ai_male_us": ("en", "us"),
+                    "ai_female_uk": ("en", "co.uk"),
+                    "ai_male_uk": ("en", "co.uk"),
+                    "ai_female_au": ("en", "com.au"),
+                    "ai_male_au": ("en", "com.au"),
+                    "ai_female_ca": ("en", "ca"),
+                    "ai_male_ca": ("en", "ca"),
+                    "ai_female_in": ("en", "co.in"),
+                    "ai_male_in": ("en", "co.in"),
+                    "ai_female_ie": ("en", "ie"),
+                    "ai_male_ie": ("en", "ie"),
+                    "ai_female_za": ("en", "co.za"),
+                    "ai_male_za": ("en", "co.za"),
+                    "ai_female_ng": ("en", "com.ng"),
+                    "ai_male_ng": ("en", "com.ng"),
+                    "ai_female_nz": ("en", "co.nz"),
+                    "ai_male_nz": ("en", "co.nz"),
+                }
             lang, tld = tld_map.get(voice, ("en", "com"))
             tts = gTTS(text=text, lang=lang, tld=tld)
             buffer = io.BytesIO()

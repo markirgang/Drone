@@ -277,7 +277,7 @@ const apiKeyBox = document.getElementById('apiKeyBox');
                         } else if (this.isRecordingAudio && this.speechDetected) {
                             if (this.silenceStart === 0) {
                                 this.silenceStart = performance.now();
-                            } else if (performance.now() - this.silenceStart > 2000) {
+                            } else if (performance.now() - this.silenceStart > 600) {
                                 this.stopAudioChunkRecordingAndSend();
                             }
                         }
@@ -336,7 +336,7 @@ const apiKeyBox = document.getElementById('apiKeyBox');
             if (this.audioChunks.length > 0) {
                 const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
                 const blob = new Blob(this.audioChunks, { type: mimeType });
-                if (blob.size >= 6500 && duration >= 700 && voiced >= 4) {
+                if (blob.size >= 4000 && duration >= 400 && voiced >= 2) {
                     this.sendVoiceBlobToGemini(blob, mimeType);
                 } else if (this.isListening) {
                     if (statusText) statusText.textContent = 'Status: Listening for speech input...';
@@ -366,7 +366,18 @@ const apiKeyBox = document.getElementById('apiKeyBox');
             })
             .then(res => res.json())
             .then(data => {
-                const transcribed = data.transcription || 'Spoken Voice Command';
+                const transcribed = (data.transcription || '').trim();
+                const hasTrigger = window.AudioHardware ? window.AudioHardware.containsTriggerName(transcribed) : true;
+                const projName = window.AudioHardware ? window.AudioHardware.getProjectName() : 'robot';
+                if (this.isListening && !hasTrigger && transcribed.length > 0) {
+                    console.log(`[Voice] Ignored speech without trigger name '${projName}': "${transcribed}"`);
+                    const statusText = document.getElementById('micStatusText');
+                    if (statusText && this.isListening) {
+                        statusText.textContent = `Status: Heard "${transcribed}" — waiting for "${projName}" anywhere in sentence.`;
+                    }
+                    return;
+                }
+                const _dummyTranscribed =  'Spoken Voice Command';
                 const reply = data.text || 'No response from Gemini Voice Engine.';
 
                 const chatInput = document.getElementById('chatInput');
